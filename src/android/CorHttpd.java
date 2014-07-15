@@ -1,11 +1,22 @@
 package com.rjfun.cordova.httpd;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
-
+import org.apache.cordova.PluginResult;
+import org.apache.cordova.PluginResult.Status;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import android.net.wifi.WifiManager;
+import android.os.Environment;
+import android.util.Log;
+import android.content.Context;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.AssetManager;
 
 /**
  * This class echoes a string called from JavaScript.
@@ -24,11 +35,10 @@ public class CorHttpd extends CordovaPlugin {
     
     private static final int	RESERVED_ARG_INDEX = 0;
     
-    private int port = 8888;
-    private String wwwRoot = "";
+	private NanoHTTPD server = null;
 
     @Override
-    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+    public boolean execute(String action, JSONArray inputs, CallbackContext callbackContext) throws JSONException {
         PluginResult result = null;
         if (ACTION_START_SERVER.equals(action)) {
             result = startServer(inputs, callbackContext);
@@ -47,21 +57,56 @@ public class CorHttpd extends CordovaPlugin {
     }
 
     private PluginResult startServer(JSONArray inputs, CallbackContext callbackContext) {
-         
+        final String wwwRoot; 
+        final int port;
         // Get the input data.
         try {
-        	this.wwwRoot = inputs.getString( WWW_ROOT_ARG_INDEX );
-            this.port = inputs.getBoolean( PORT_ARG_INDEX );
+        	wwwRoot = inputs.getString( WWW_ROOT_ARG_INDEX );
+            port = inputs.getInt( PORT_ARG_INDEX );
         } catch (JSONException exception) {
             Log.w(LOGTAG, String.format("Got JSON Exception: %s", exception.getMessage()));
             return new PluginResult(Status.JSON_EXCEPTION);
         }
         
+        if(wwwRoot.length() >0 && wwwRoot.charAt(0)=='/') {
+        	callbackContext.error("Absolute path not allowed due to security reason.");
+        	return null;
+        }
+        
+        final String fullPath = "www/" + wwwRoot;
+
+/*        
+		try {
+	        Context ctx = cordova.getActivity().getApplicationContext();
+			AssetManager am = ctx.getResources().getAssets();
+			AssetFileDescriptor afd = am.openFd(fullPath);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+*/        
+		WifiManager wifiManager = (WifiManager) cordova.getActivity().getSystemService(Context.WIFI_SERVICE);
+		int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+		final String formatedIpAddress = String.format("%d.%d.%d.%d", (ipAddress & 0xff), (ipAddress >> 8 & 0xff), (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
+		String url = ("http://" + formatedIpAddress + ":" + port);
+
         final CallbackContext delayCallback = callbackContext;
         cordova.getActivity().runOnUiThread(new Runnable(){
 			@Override
             public void run() {
-				/* create web server and start */
+
+				try {
+					//File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
+					//File f = new File( fullPath );
+					File f = new File( "/" );
+					server = new NanoHTTPD(port, f);
+					
+				} catch (IOException e) {
+					delayCallback.error("failed to start httpd");
+				}
+				
+				// trigger event 'ServerStarted'
+				
                 delayCallback.success();
             }
         });
@@ -83,7 +128,10 @@ public class CorHttpd extends CordovaPlugin {
         cordova.getActivity().runOnUiThread(new Runnable(){
 			@Override
             public void run() {
-				/* stop web server */
+				if (server != null) {
+					server.stop();
+					server = null;
+				}
                 delayCallback.success();
             }
         });
