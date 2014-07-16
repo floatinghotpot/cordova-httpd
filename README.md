@@ -1,18 +1,15 @@
-CorHttpd - Cordova Httpd
-=============
+What Can I do with CorHttpd?
+============================
+You can browser (locally or remotely) to access files in smartphone:
 
-CorHttpd is a plugin to embed a tiny web server into Cordova.
-
-Use case
-=========
-1, browse the files in smartphone with a browser in PC.
-2, copy files from smartphone to PC quickly, just with Wifi.
-3, use cordova webview to access the assets/www/ content with http protocol.
+* browse the files in smartphone with a browser in PC.
+* copy files from smartphone to PC quickly, just with Wifi.
+* use cordova webview to access the assets/www/ content with http protocol.
 
 Why http protocol is needed?
 ============================
-The most popular phaser.js game engine, does not support loading resource from local file system!
-Because of security reason, browser does not support local AJAX calls!
+* Just use wifi instead of cable, more convenient.
+* The most popular phaser.js game engine, does not support loading resource from local file system. It's big bottle neck to deploy HTML5 games to Cordova platform. Because of security reason, browser does not support local AJAX calls.
 
 How to use?
 ============================
@@ -20,9 +17,18 @@ How to use?
 Add the plugin to your cordova project:
 
     cordova plugin add https://github.com/floatinghotpot/cordova-httpd.git
+
+Copy the test/index.html to www/ and play around.    
+
+Javascript APIs
+=============================
+
+* startServer( options, success_callback, error_callback );
+* stopServer( success_callback, error_callback );
+* getURL( success_callback, error_callback );
+* getLocalPath( success_callback, error_callback );
     
-    
-Call it in javascript like this:
+Example code:
 
 ```javascript
 
