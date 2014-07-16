@@ -6,6 +6,16 @@ xmlns="http://apache.org/cordova/ns/plugins/1.0"
 xmlns:android="http://schemas.android.com/apk/res/android">
 
 <name>CorHttpd</name>
+<description>CorHttpd is an plugin with embedded web server into Cordova</description>
+<author>Liming Xie</author>
+<license>MIT</license>
+<keywords>httpd,web,server,http</keywords>
+<repo>https://github.com/floatinghotpot/cordova-httpd.git</repo>
+<issue>https://github.com/floatinghotpot/cordova-httpd/issues</issue>
+
+<engines>
+    <engine name="cordova" version=">=2.9" />
+</engines>
 
 <js-module name="CorHttpd" src="www/CorHttpd.js">
 <clobbers target="cordova.plugins.CorHttpd" />
