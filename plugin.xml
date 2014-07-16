@@ -25,6 +25,10 @@ xmlns:android="http://schemas.android.com/apk/res/android">
 </config-file>
 
 <source-file src="src/android/CorHttpd.java" target-dir="src/com/rjfun/cordova/httpd" />
+<source-file src="src/android/AndroidFile.java" target-dir="src/com/rjfun/cordova/httpd" />
+<source-file src="src/android/NanoHTTPD.java" target-dir="src/com/rjfun/cordova/httpd" />
+<source-file src="src/android/WebServer.java" target-dir="src/com/rjfun/cordova/httpd" />
+
 </platform>
 
 <platform name="ios">
@@ -36,6 +40,58 @@ xmlns:android="http://schemas.android.com/apk/res/android">
 </config-file>
 
 <source-file src="src/ios/CorHttpd.m" />
+
+<source-file src="src/ios/CocoaHttpd/HTTPLogging.h" />
+<source-file src="src/ios/CocoaHttpd/HTTPServer.h" />
+<source-file src="src/ios/CocoaHttpd/HTTPServer.m" />
+<source-file src="src/ios/CocoaHttpd/WebSocket.h" />
+<source-file src="src/ios/CocoaHttpd/WebSocket.m" />
+<source-file src="src/ios/CocoaHttpd/HTTPMessage.h" />
+<source-file src="src/ios/CocoaHttpd/HTTPMessage.m" />
+<source-file src="src/ios/CocoaHttpd/HTTPAuthenticationRequest.h" />
+<source-file src="src/ios/CocoaHttpd/HTTPAuthenticationRequest.m" />
+<source-file src="src/ios/CocoaHttpd/HTTPConnection.h" />
+<source-file src="src/ios/CocoaHttpd/HTTPConnection.m" />
+<source-file src="src/ios/CocoaHttpd/HTTPResponse.h" />
+<source-file src="src/ios/CocoaHttpd/HTTPResponses/HTTPAsyncFileResponse.h" />
+<source-file src="src/ios/CocoaHttpd/HTTPResponses/HTTPAsyncFileResponse.m" />
+<source-file src="src/ios/CocoaHttpd/HTTPResponses/HTTPErrorResponse.h" />
+<source-file src="src/ios/CocoaHttpd/HTTPResponses/HTTPErrorResponse.m" />
+<source-file src="src/ios/CocoaHttpd/HTTPResponses/HTTPDynamicFileResponse.h" />
+<source-file src="src/ios/CocoaHttpd/HTTPResponses/HTTPDynamicFileResponse.m" />
+<source-file src="src/ios/CocoaHttpd/HTTPResponses/HTTPRedirectResponse.h" />
+<source-file src="src/ios/CocoaHttpd/HTTPResponses/HTTPRedirectResponse.m" />
+<source-file src="src/ios/CocoaHttpd/HTTPResponses/HTTPFileResponse.h" />
+<source-file src="src/ios/CocoaHttpd/HTTPResponses/HTTPFileResponse.m" />
+<source-file src="src/ios/CocoaHttpd/HTTPResponses/HTTPDataResponse.h" />
+<source-file src="src/ios/CocoaHttpd/HTTPResponses/HTTPDataResponse.m" />
+<source-file src="src/ios/CocoaHttpd/Categories/DDData.h" />
+<source-file src="src/ios/CocoaHttpd/Categories/DDData.m" />
+<source-file src="src/ios/CocoaHttpd/Categories/DDNumber.h" />
+<source-file src="src/ios/CocoaHttpd/Categories/DDNumber.m" />
+<source-file src="src/ios/CocoaHttpd/Categories/DDRange.h" />
+<source-file src="src/ios/CocoaHttpd/Categories/DDRange.m" />
+<source-file src="src/ios/CocoaHttpd/Vendor/CocoaAsyncSocket/GCDAsyncSocket.h" />
+<source-file src="src/ios/CocoaHttpd/Vendor/CocoaAsyncSocket/GCDAsyncSocket.m" />
+<source-file src="src/ios/CocoaHttpd//Vendor/CocoaLumberjack/DDAbstractDatabaseLogger.h" />
+<source-file src="src/ios/CocoaHttpd//Vendor/CocoaLumberjack/DDAbstractDatabaseLogger.m" />
+<source-file src="src/ios/CocoaHttpd//Vendor/CocoaLumberjack/DDFileLogger.h" />
+<source-file src="src/ios/CocoaHttpd//Vendor/CocoaLumberjack/DDFileLogger.m" />
+<source-file src="src/ios/CocoaHttpd//Vendor/CocoaLumberjack/DDASLLogger.h" />
+<source-file src="src/ios/CocoaHttpd//Vendor/CocoaLumberjack/DDASLLogger.m" />
+<source-file src="src/ios/CocoaHttpd//Vendor/CocoaLumberjack/DDTTYLogger.h" />
+<source-file src="src/ios/CocoaHttpd//Vendor/CocoaLumberjack/DDTTYLogger.m" />
+<source-file src="src/ios/CocoaHttpd//Vendor/CocoaLumberjack/DDLog.h" />
+<source-file src="src/ios/CocoaHttpd//Vendor/CocoaLumberjack/DDLog.m" />
+<source-file src="src/ios/CocoaHttpd//Vendor/CocoaLumberjack/Extensions/ContextFilterLogFormatter.h" />
+<source-file src="src/ios/CocoaHttpd//Vendor/CocoaLumberjack/Extensions/ContextFilterLogFormatter.m" />
+<source-file src="src/ios/CocoaHttpd//Vendor/CocoaLumberjack/Extensions/DispatchQueueLogFormatter.h" />
+<source-file src="src/ios/CocoaHttpd//Vendor/CocoaLumberjack/Extensions/DispatchQueueLogFormatter.m" />
+
+<framework src="CFNetwork.framework" />
+<framework src="Foundation.framework" />
+<framework src="Security.framework" />
+
 </platform>
 
 </plugin>
