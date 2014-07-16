@@ -124,23 +124,6 @@ public class CorHttpd extends CordovaPlugin {
         cordova.getActivity().runOnUiThread(new Runnable(){
 			@Override
             public void run() {
-/*
- 				if(! localPath.startsWith("/")) {
-		        	// assets are packed into APK, not accessible with absolute path
-		    		try {
-		    	        Context ctx = cordova.getActivity().getApplicationContext();
-		    			AssetManager am = ctx.getResources().getAssets();
-		    			String[] files = am.list( localPath );
-		    			for(int i=0; i<files.length; i++) {
-		    				Log.w(LOGTAG, "list: " + files[i]);
-		    			}
-		    			//AssetFileDescriptor afd = am.openFd(localPath);
-		    		} catch (IOException e1) {
-		    			String errmsg = String.format("IO Exception: %s", e1.getMessage());
-		    			Log.w(LOGTAG, errmsg);
-		    		}
-				}
-*/	        	
 				String errmsg = __startServer();
 				if(errmsg != "") {
 					delayCallback.error( errmsg );
@@ -157,7 +140,13 @@ public class CorHttpd extends CordovaPlugin {
     private String __startServer() {
     	String errmsg = "";
     	try {
-			server = new WebServer(port, localPath);
+    		AndroidFile f = new AndroidFile(localPath);
+    		
+	        Context ctx = cordova.getActivity().getApplicationContext();
+			AssetManager am = ctx.getResources().getAssets();
+    		f.setAssetManager( am );
+    		
+			server = new WebServer(port, f);
 		} catch (IOException e) {
 			errmsg = String.format("IO Exception: %s", e.getMessage());
 			Log.w(LOGTAG, errmsg);
@@ -209,7 +198,7 @@ public class CorHttpd extends CordovaPlugin {
      * @param multitasking		Flag indicating if multitasking is turned on for app
      */
     public void onPause(boolean multitasking) {
-    	if(! multitasking) __stopServer();
+    	//if(! multitasking) __stopServer();
     }
 
     /**
@@ -218,7 +207,7 @@ public class CorHttpd extends CordovaPlugin {
      * @param multitasking		Flag indicating if multitasking is turned on for app
      */
     public void onResume(boolean multitasking) {
-    	if(! multitasking) __startServer();
+    	//if(! multitasking) __startServer();
     }
 
     /**

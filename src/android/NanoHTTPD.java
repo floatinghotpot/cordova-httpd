@@ -3,7 +3,6 @@ package com.rjfun.cordova.httpd;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,9 +20,10 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
-
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
+
+import android.util.Log;
 
 /**
  * A simple, tiny, nicely embeddable HTTP 1.0 (partially 1.1) server in Java
@@ -71,6 +71,8 @@ import java.io.FileOutputStream;
 @SuppressWarnings("unchecked")
 public class NanoHTTPD
 {
+	private final String LOGTAG = "NanoHTTPD";
+	
 	// ==================================================
 	// API parts
 	// ==================================================
@@ -89,30 +91,29 @@ public class NanoHTTPD
 	@SuppressWarnings("rawtypes")
 	public Response serve( String uri, String method, Properties header, Properties parms, Properties files )
 	{
-		myOut.println( method + " '" + uri + "' " );
-
+		Log.i( LOGTAG, method + " '" + uri + "' " );
+/*
 		Enumeration e = header.propertyNames();
 		while ( e.hasMoreElements())
 		{
 			String value = (String)e.nextElement();
-			myOut.println( "  HDR: '" + value + "' = '" +
-					header.getProperty( value ) + "'" );
+			Log.i( LOGTAG, "  HDR: '" + value + "' = '" + header.getProperty( value ) + "'" );
 		}
+		
 		e = parms.propertyNames();
 		while ( e.hasMoreElements())
 		{
 			String value = (String)e.nextElement();
-			myOut.println( "  PRM: '" + value + "' = '" +
-					parms.getProperty( value ) + "'" );
+			Log.i( LOGTAG, "  PRM: '" + value + "' = '" + parms.getProperty( value ) + "'" );
 		}
+		
 		e = files.propertyNames();
 		while ( e.hasMoreElements())
 		{
 			String value = (String)e.nextElement();
-			myOut.println( "  UPLOADED: '" + value + "' = '" +
-					files.getProperty( value ) + "'" );
+			Log.i( LOGTAG, "  UPLOADED: '" + value + "' = '" + files.getProperty( value ) + "'" );
 		}
-
+*/
 		return serveFile( uri, header, myRootDir, true );
 	}
 
@@ -220,10 +221,8 @@ public class NanoHTTPD
 	 * Starts a HTTP server to given port.<p>
 	 * Throws an IOException if the socket is already in use
 	 */
-	public NanoHTTPD( int port, File wwwroot ) throws IOException
+	public NanoHTTPD( int port, AndroidFile wwwroot ) throws IOException
 	{
-		myOut.println("wwwroot: " + wwwroot.getAbsolutePath());
-		
 		myTcpPort = port;
 		this.myRootDir = wwwroot;
 		myServerSocket = new ServerSocket( myTcpPort );
@@ -264,6 +263,9 @@ public class NanoHTTPD
 	 */
 	public static void main( String[] args )
 	{
+		PrintStream myOut = System.out;
+		PrintStream myErr = System.err;
+		
 		myOut.println( "NanoHTTPD 1.25 (C) 2001,2005-2011 Jarno Elonen and (C) 2010 Konstantinos Togias\n" +
 				"(Command line options: [-p port] [-d root-dir] [--licence])\n" );
 
@@ -285,7 +287,7 @@ public class NanoHTTPD
 
 		try
 		{
-			new NanoHTTPD( port, wwwroot );
+			new NanoHTTPD( port, new AndroidFile(wwwroot.getPath()) );
 		}
 		catch( IOException ioe )
 		{
@@ -673,7 +675,7 @@ public class NanoHTTPD
 					fstream.close();
 					path = temp.getAbsolutePath();
 				} catch (Exception e) { // Catch exception if any
-					myErr.println("Error: " + e.getMessage());
+					Log.e(LOGTAG, "Error: " + e.getMessage());
 				}
 			}
 			return path;
@@ -855,7 +857,7 @@ public class NanoHTTPD
 	private int myTcpPort;
 	private final ServerSocket myServerSocket;
 	private Thread myThread;
-	private File myRootDir;
+	private AndroidFile myRootDir;
 
 	// ==================================================
 	// File server code
@@ -865,11 +867,11 @@ public class NanoHTTPD
 	 * Serves file from homeDir and its' subdirectories (only).
 	 * Uses only URI, ignores all headers and HTTP parameters.
 	 */
-	public Response serveFile( String uri, Properties header, File homeDir,
+	public Response serveFile( String uri, Properties header, AndroidFile homeDir,
 			boolean allowDirectoryListing )
 	{
 		Response res = null;
-
+		
 		// Make sure we won't die of an exception later
 		if ( !homeDir.isDirectory())
 			res = new Response( HTTP_INTERNALERROR, MIME_PLAINTEXT,
@@ -888,7 +890,7 @@ public class NanoHTTPD
 						"FORBIDDEN: Won't serve ../ for security reasons." );
 		}
 
-		File f = new File( homeDir, uri );
+		AndroidFile f = new AndroidFile( homeDir, uri );
 		if ( res == null && !f.exists())
 			res = new Response( HTTP_NOTFOUND, MIME_PLAINTEXT,
 					"Error 404, file not found." );
@@ -909,11 +911,11 @@ public class NanoHTTPD
 
 			if ( res == null )
 			{
-				// First try index.html and index.htm
-				if ( new File( f, "index.html" ).exists())
-					f = new File( homeDir, uri + "/index.html" );
-				else if ( new File( f, "index.htm" ).exists())
-					f = new File( homeDir, uri + "/index.htm" );
+				// First try index.html and index.htm 
+				if ( new AndroidFile( f, "index.html" ).exists())
+					f = new AndroidFile( homeDir, uri + "/index.html" );
+				else if ( new AndroidFile( f, "index.htm" ).exists())
+					f = new AndroidFile( homeDir, uri + "/index.htm" );
 				// No index file, list the directory if it is readable
 				else if ( allowDirectoryListing && f.canRead() )
 				{
@@ -932,7 +934,7 @@ public class NanoHTTPD
 					{
 						for ( int i=0; i<files.length; ++i )
 						{
-							File curFile = new File( f, files[i] );
+							AndroidFile curFile = new AndroidFile( f, files[i] );
 							boolean dir = curFile.isDirectory();
 							if ( dir )
 							{
@@ -986,6 +988,8 @@ public class NanoHTTPD
 
 				// Calculate etag
 				String etag = Integer.toHexString((f.getAbsolutePath() + f.lastModified() + "" + f.length()).hashCode());
+				
+				//System.out.println( String.format("mime: %s, etag: %s", mime, etag));
 
 				// Support (simple) skipping:
 				long startFrom = 0;
@@ -1010,6 +1014,8 @@ public class NanoHTTPD
 
 				// Change return code and add Content-Range header when skipping is requested
 				long fileLen = f.length();
+				//System.out.println( String.format("file length: %d", fileLen));
+				
 				if (range != null && startFrom >= 0)
 				{
 					if ( startFrom >= fileLen)
@@ -1026,9 +1032,10 @@ public class NanoHTTPD
 						if ( newLen < 0 ) newLen = 0;
 
 						final long dataLen = newLen;
-						FileInputStream fis = new FileInputStream( f ) {
-							public int available() throws IOException { return (int)dataLen; }
-						};
+						//InputStream fis = new FileInputStream( f ) {
+						//	public int available() throws IOException { return (int)dataLen; }
+						//};
+						InputStream fis = f.getInputStream();
 						fis.skip( startFrom );
 
 						res = new Response( HTTP_PARTIALCONTENT, mime, fis );
@@ -1043,7 +1050,8 @@ public class NanoHTTPD
 						res = new Response( HTTP_NOTMODIFIED, mime, "");
 					else
 					{
-						res = new Response( HTTP_OK, mime, new FileInputStream( f ));
+						//res = new Response( HTTP_OK, mime, new FileInputStream( f ));
+						res = new Response( HTTP_OK, mime, f.getInputStream());
 						res.addHeader( "Content-Length", "" + fileLen);
 						res.addHeader( "ETag", etag);
 					}
@@ -1096,11 +1104,7 @@ public class NanoHTTPD
 	}
 
 	private static int theBufferSize = 16 * 1024;
-
-	// Change these if you want to log to somewhere else than stdout
-	protected static PrintStream myOut = System.out; 
-	protected static PrintStream myErr = System.err;
-
+	
 	/**
 	 * GMT date formatter
 	 */
