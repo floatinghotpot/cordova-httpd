@@ -1,22 +1,4 @@
 <!DOCTYPE html>
-<!--
-    Licensed to the Apache Software Foundation (ASF) under one
-    or more contributor license agreements.  See the NOTICE file
-    distributed with this work for additional information
-    regarding copyright ownership.  The ASF licenses this file
-    to you under the Apache License, Version 2.0 (the
-    "License"); you may not use this file except in compliance
-    with the License.  You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing,
-    software distributed under the License is distributed on an
-    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-     KIND, either express or implied.  See the License for the
-    specific language governing permissions and limitations
-    under the License.
--->
 <html>
     <head>
         <meta charset="utf-8" />
@@ -27,7 +9,7 @@
         <style type="text/css">
             html, body { width:100%; height:100%; margin:0; padding:0; overflow:hidden; background-color:white; }
             div#fullpage { width:100%; height:100%; margin:0; padding:0; border:0px solid red; text-align:center; vertical-align:middle; }
-            button { font-size: 22px; }
+            button { font-size: 18px; }
         </style>
     </head>
     <body onload="onLoad()">
@@ -39,7 +21,7 @@
     function onDeviceReady() {
         httpd = ( cordova && cordova.plugins && cordova.plugins.CorHttpd ) ? cordova.plugins.CorHttpd : null;
 
-        startServer("");
+        startServer("htdocs");
     }
     function updateStatus() {
     	document.getElementById('location').innerHTML = "document.location.href: " + document.location.href;
@@ -68,7 +50,8 @@
     	    	    	'www_root' : wwwroot,
     	    	    	'port' : 8080
     	    	    }, function( url ){
-        	    		document.getElementById('url').innerHTML = "server is started: <a href='" + url + "' target='_blank'>" + url + "</a>";
+        	    		//document.getElementById('url').innerHTML = "server is started: <a href='" + url + "' target='_blank'>" + url + "</a>";
+                        updateStatus();
     	    	    }, function( error ){
     	    	    	document.getElementById('url').innerHTML = 'failed to start server: ' + error;
     	    	    });
@@ -82,7 +65,8 @@
     function stopServer() {
     	if ( httpd ) {
     	    httpd.stopServer(function(){
-    	    	document.getElementById('url').innerHTML = 'server is stopped.';
+    	    	//document.getElementById('url').innerHTML = 'server is stopped.';
+                updateStatus();
     	    },function( error ){
     	    	document.getElementById('url').innerHTML = 'failed to stop server' + error;
     	    });
@@ -93,9 +77,9 @@
     </script>
     <div id="fullpage">
     <p>Demo for CorHttpd Plugin</p>
-    <p><button onclick="startServer('');">Start CorHttpd at assets/www/</button></p>
-    <p><button onclick="startServer('/');">Start CorHttpd at /</button></p>
-    <p><button onclick="stopServer();">Stop CorHttpd</button></p>
+    <p><button onclick="startServer('htdocs');">Start Httpd at www/htdocs</button></p>
+    <p><button onclick="startServer('/');">Start Httpd at /</button></p>
+    <p><button onclick="stopServer();">Stop Httpd</button></p>
     <p><button onclick="updateStatus();">Check Status</button></p>
     <div id='location'></div>
     <div id='url'></div>
