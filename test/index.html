@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+        <title>Hello World</title>
+        <script type="text/javascript" src="cordova.js"></script>
+        <style type="text/css">
+            html, body { width:100%; height:100%; margin:0; padding:0; overflow:hidden; background-color:white; }
+            div#fullpage { width:100%; height:100%; margin:0; padding:0; border:0px solid red; text-align:center; vertical-align:middle; }
+            button { font-size: 22px; }
+        </style>
+    </head>
+    <body onload="onLoad()">
+    <script>
+    function onLoad() {
+    	document.addEventListener("deviceready", onDeviceReady, false);
+    }
+    function startServer() {
+    	var info = document.getElementById('info');
+    	if ( cordova && cordova.plugins && cordova.plugins.CorHttpd ) {
+    	    var httpd = cordova.plugins.CorHttpd;
+    	    httpd.getURL(function(url){
+    	    	if(url.length > 0) {
+	    	    	info.innerHTML = "server already started: <a href='" + url + "' target='_blank'>" + url + "</a>";
+	            	httpd.getLocalPath(function(path){
+	            		info.innerHTML = info.innerHTML + "<br/>localPath:" + path;
+	            	});
+	    	    } else {
+    	    	    httpd.startServer({
+    	    	    	'doc_root' : '/',
+    	    	    	'port' : 8080
+    	    	    }, function( url ){
+    	    	    	info.innerHTML = "server started: <a href='" + url + "' target='_blank'>" + url + "</a>";
+    	            	httpd.getLocalPath(function(path){
+    	            		info.innerHTML = info.innerHTML + "<br/>localPath:" + path;
+    	            	});
+    	    	    }, function( error ){
+    	    	    	info.innerHTML = 'failed to start server: ' + error;
+    	    	    });
+    	    	}
+    	    	
+    	    },function(){});
+    	} else {
+    		alert('CorHttpd plugin not available/ready.');
+    	}
+    }
+    function stopServer() {
+    	if ( cordova && cordova.plugins && cordova.plugins.CorHttpd ) {
+    	    var httpd = cordova.plugins.CorHttpd;
+    	    httpd.stopServer(function(){
+    	    	var info = document.getElementById('info');
+    	    	info.innerHTML = 'server stopped.';
+    	    },function( error ){
+    	    	var info = document.getElementById('info');
+    	    	info.innerHTML = 'failed to stop server' + error;
+    	    });
+    	}
+    }
+    function onDeviceReady() {
+    	startServer();
+    }
+    </script>
+    <div id="fullpage">
+    <p>Demo for CorHttpd Plugin</p>
+    <p><button onclick="startServer();">Start CorHttpd</button></p>
+    <p><button onclick="stopServer();">Stop CorHttpd</button></p>
+    <div id='info'></div>
+
+<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">
+<input type="hidden" name="cmd" value="_donations">
+<input type="hidden" name="business" value="rjfun.mobile@gmail.com">
+<input type="hidden" name="lc" value="GB">
+<input type="hidden" name="item_name" value="cordova-httpd">
+<input type="hidden" name="no_note" value="0">
+<input type="hidden" name="currency_code" value="USD">
+<input type="hidden" name="bn" value="PP-DonationsBF:btn_donateCC_LG.gif:NonHostedGuest">
+<input type="image" src="https://www.paypalobjects.com/en_US/GB/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal – The safer, easier way to pay online.">
+<img alt="" border="0" src="https://www.paypalobjects.com/zh_XC/i/scr/pixel.gif" width="1" height="1">
+</form>
+    
+    </div>
+    
+    </body>
+</html>

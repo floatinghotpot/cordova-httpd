@@ -7,7 +7,7 @@ import android.os.Environment;
 
 public class WebServer extends NanoHTTPD
 {
-	public WebServer(int port) throws IOException {
-		super(port, new File(Environment.getExternalStorageDirectory().getAbsolutePath()));
+	public WebServer(int port, String wwwroot ) throws IOException {
+		super(port, new File( wwwroot ));
 	}
 }

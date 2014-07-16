@@ -222,6 +222,8 @@ public class NanoHTTPD
 	 */
 	public NanoHTTPD( int port, File wwwroot ) throws IOException
 	{
+		myOut.println("wwwroot: " + wwwroot.getAbsolutePath());
+		
 		myTcpPort = port;
 		this.myRootDir = wwwroot;
 		myServerSocket = new ServerSocket( myTcpPort );

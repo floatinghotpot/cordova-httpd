@@ -15,6 +15,7 @@ import android.net.wifi.WifiManager;
 import android.os.Environment;
 import android.util.Log;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 
@@ -29,13 +30,17 @@ public class CorHttpd extends CordovaPlugin {
     /** Cordova Actions. */
     private static final String ACTION_START_SERVER = "startServer";
     private static final String ACTION_STOP_SERVER = "stopServer";
+    private static final String ACTION_GET_URL = "getURL";
+    private static final String ACTION_GET_LOCAL_PATH = "getLocalPath";
     
     private static final int	WWW_ROOT_ARG_INDEX = 0;
     private static final int	PORT_ARG_INDEX = 1;
     
-    private static final int	RESERVED_ARG_INDEX = 0;
-    
-	private NanoHTTPD server = null;
+	private String localPath = "";
+	private int port = 8080;
+
+	private WebServer server = null;
+	private String	url = "";
 
     @Override
     public boolean execute(String action, JSONArray inputs, CallbackContext callbackContext) throws JSONException {
@@ -45,6 +50,12 @@ public class CorHttpd extends CordovaPlugin {
             
         } else if (ACTION_STOP_SERVER.equals(action)) {
             result = stopServer(inputs, callbackContext);
+            
+        } else if (ACTION_GET_URL.equals(action)) {
+            result = getURL(inputs, callbackContext);
+            
+        } else if (ACTION_GET_LOCAL_PATH.equals(action)) {
+            result = getLocalPath(inputs, callbackContext);
             
         } else {
             Log.d(LOGTAG, String.format("Invalid action passed: %s", action));
@@ -57,81 +68,112 @@ public class CorHttpd extends CordovaPlugin {
     }
 
     private PluginResult startServer(JSONArray inputs, CallbackContext callbackContext) {
-        final String wwwRoot; 
-        final int port;
+		Log.w(LOGTAG, "startServer");
+
+		final String docRoot; 
         // Get the input data.
         try {
-        	wwwRoot = inputs.getString( WWW_ROOT_ARG_INDEX );
+        	docRoot = inputs.getString( WWW_ROOT_ARG_INDEX );
             port = inputs.getInt( PORT_ARG_INDEX );
         } catch (JSONException exception) {
             Log.w(LOGTAG, String.format("Got JSON Exception: %s", exception.getMessage()));
-            return new PluginResult(Status.JSON_EXCEPTION);
+            callbackContext.error( exception.getMessage() );
+            return null;
+            //return new PluginResult(Status.JSON_EXCEPTION);
         }
         
-        if(wwwRoot.length() >0 && wwwRoot.charAt(0)=='/') {
-        	callbackContext.error("Absolute path not allowed due to security reason.");
-        	return null;
-        }
+		//localPath = Environment.getExternalStorageDirectory().getAbsolutePath();
         
-        final String fullPath = "www/" + wwwRoot;
+        if(docRoot.startsWith("/")) {
+        	localPath = docRoot;
+        } else {
+        	//localPath = "file:///android_asset/www";
+        	localPath = "www";
+        	if(docRoot.length()>0) {
+        		localPath += "/";
+        		localPath += docRoot;
+        	}
+        }
 
-/*        
-		try {
-	        Context ctx = cordova.getActivity().getApplicationContext();
-			AssetManager am = ctx.getResources().getAssets();
-			AssetFileDescriptor afd = am.openFd(fullPath);
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-*/        
 		WifiManager wifiManager = (WifiManager) cordova.getActivity().getSystemService(Context.WIFI_SERVICE);
 		int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
 		final String formatedIpAddress = String.format("%d.%d.%d.%d", (ipAddress & 0xff), (ipAddress >> 8 & 0xff), (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
-		String url = ("http://" + formatedIpAddress + ":" + port);
+		this.url = ("http://" + formatedIpAddress + ":" + port);
 
         final CallbackContext delayCallback = callbackContext;
         cordova.getActivity().runOnUiThread(new Runnable(){
 			@Override
             public void run() {
-
-				try {
-					//File f = new File(Environment.getExternalStorageDirectory().getAbsolutePath());
-					//File f = new File( fullPath );
-					File f = new File( "/" );
-					server = new NanoHTTPD(port, f);
-					
-				} catch (IOException e) {
-					delayCallback.error("failed to start httpd");
+				if(! localPath.startsWith("/")) {
+		        	// assets are packed into APK, not accessible with absolute path
+		    		try {
+		    	        Context ctx = cordova.getActivity().getApplicationContext();
+		    			AssetManager am = ctx.getResources().getAssets();
+		    			String[] files = am.list( localPath );
+		    			for(int i=0; i<files.length; i++) {
+		    				Log.w(LOGTAG, "list: " + files[i]);
+		    			}
+		    			//AssetFileDescriptor afd = am.openFd(localPath);
+		    		} catch (IOException e1) {
+		    			String errmsg = String.format("IO Exception: %s", e1.getMessage());
+		    			Log.w(LOGTAG, errmsg);
+		    		}
 				}
-				
-				// trigger event 'ServerStarted'
-				
-                delayCallback.success();
+	        	
+				String errmsg = __startServer();
+				if(errmsg != "") {
+					delayCallback.error( errmsg );
+				} else {
+	                delayCallback.success( url );
+				}
             }
         });
         
+        return null;
+    }
+    
+    private String __startServer() {
+    	String errmsg = "";
+    	try {
+			server = new WebServer(port, localPath);
+		} catch (IOException e) {
+			errmsg = String.format("IO Exception: %s", e.getMessage());
+			Log.w(LOGTAG, errmsg);
+		}
+    	return errmsg;
+    }
+
+    private void __stopServer() {
+		if (server != null) {
+			server.stop();
+			server = null;
+		}
+    }
+    
+   private PluginResult getURL(JSONArray inputs, CallbackContext callbackContext) {
+		Log.w(LOGTAG, "getURL");
+		
+    	callbackContext.success( this.url );
+        return null;
+    }
+
+    private PluginResult getLocalPath(JSONArray inputs, CallbackContext callbackContext) {
+		Log.w(LOGTAG, "getLocalPath");
+		
+    	callbackContext.success( this.localPath );
         return null;
     }
 
     private PluginResult stopServer(JSONArray inputs, CallbackContext callbackContext) {
-        
-        // Get the input data.
-        try {
-        	String reserved = inputs.getString( RESERVED_ARG_INDEX );
-        } catch (JSONException exception) {
-            Log.w(LOGTAG, String.format("Got JSON Exception: %s", exception.getMessage()));
-            return new PluginResult(Status.JSON_EXCEPTION);
-        }
-        
+		Log.w(LOGTAG, "stopServer");
+		
         final CallbackContext delayCallback = callbackContext;
         cordova.getActivity().runOnUiThread(new Runnable(){
 			@Override
             public void run() {
-				if (server != null) {
-					server.stop();
-					server = null;
-				}
+				__stopServer();
+				url = "";
+				localPath = "";
                 delayCallback.success();
             }
         });
@@ -139,4 +181,28 @@ public class CorHttpd extends CordovaPlugin {
         return null;
     }
 
+    /**
+     * Called when the system is about to start resuming a previous activity.
+     *
+     * @param multitasking		Flag indicating if multitasking is turned on for app
+     */
+    public void onPause(boolean multitasking) {
+    	if(! multitasking) __stopServer();
+    }
+
+    /**
+     * Called when the activity will start interacting with the user.
+     *
+     * @param multitasking		Flag indicating if multitasking is turned on for app
+     */
+    public void onResume(boolean multitasking) {
+    	if(! multitasking) __startServer();
+    }
+
+    /**
+     * The final call you receive before your activity is destroyed.
+     */
+    public void onDestroy() {
+    	__stopServer();
+    }
 }
