@@ -18,7 +18,7 @@ Add the plugin to your cordova project:
 
     cordova plugin add https://github.com/floatinghotpot/cordova-httpd.git
 
-Copy the test/index.html to www/ and play around.    
+Copy the test/index.html, test/htdocs to www/ and play around.    
 
 Javascript APIs
 =============================
