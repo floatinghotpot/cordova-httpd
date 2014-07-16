@@ -2,11 +2,16 @@ package com.rjfun.cordova.httpd;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.PluginResult;
 import org.apache.cordova.PluginResult.Status;
+import org.apache.http.conn.util.InetAddressUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -66,6 +71,28 @@ public class CorHttpd extends CordovaPlugin {
         
         return true;
     }
+    
+    private String __getLocalIpAddress() {
+    	try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+                NetworkInterface intf = en.nextElement();
+                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (! inetAddress.isLoopbackAddress()) {
+                    	String ip = inetAddress.getHostAddress();
+                    	if(InetAddressUtils.isIPv4Address(ip)) {
+                    		Log.w(LOGTAG, "local IP: "+ ip);
+                    		return ip;
+                    	}
+                    }
+                }
+            }
+        } catch (SocketException ex) {
+            Log.e(LOGTAG, ex.toString());
+        }
+    	
+		return "127.0.0.1";
+    }
 
     private PluginResult startServer(JSONArray inputs, CallbackContext callbackContext) {
 		Log.w(LOGTAG, "startServer");
@@ -76,15 +103,13 @@ public class CorHttpd extends CordovaPlugin {
         	docRoot = inputs.getString( WWW_ROOT_ARG_INDEX );
             port = inputs.getInt( PORT_ARG_INDEX );
         } catch (JSONException exception) {
-            Log.w(LOGTAG, String.format("Got JSON Exception: %s", exception.getMessage()));
+            Log.w(LOGTAG, String.format("JSON Exception: %s", exception.getMessage()));
             callbackContext.error( exception.getMessage() );
             return null;
-            //return new PluginResult(Status.JSON_EXCEPTION);
         }
         
-		//localPath = Environment.getExternalStorageDirectory().getAbsolutePath();
-        
         if(docRoot.startsWith("/")) {
+    		//localPath = Environment.getExternalStorageDirectory().getAbsolutePath();
         	localPath = docRoot;
         } else {
         	//localPath = "file:///android_asset/www";
@@ -95,16 +120,12 @@ public class CorHttpd extends CordovaPlugin {
         	}
         }
 
-		WifiManager wifiManager = (WifiManager) cordova.getActivity().getSystemService(Context.WIFI_SERVICE);
-		int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
-		final String formatedIpAddress = String.format("%d.%d.%d.%d", (ipAddress & 0xff), (ipAddress >> 8 & 0xff), (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
-		this.url = ("http://" + formatedIpAddress + ":" + port);
-
         final CallbackContext delayCallback = callbackContext;
         cordova.getActivity().runOnUiThread(new Runnable(){
 			@Override
             public void run() {
-				if(! localPath.startsWith("/")) {
+/*
+ 				if(! localPath.startsWith("/")) {
 		        	// assets are packed into APK, not accessible with absolute path
 		    		try {
 		    	        Context ctx = cordova.getActivity().getApplicationContext();
@@ -119,11 +140,12 @@ public class CorHttpd extends CordovaPlugin {
 		    			Log.w(LOGTAG, errmsg);
 		    		}
 				}
-	        	
+*/	        	
 				String errmsg = __startServer();
 				if(errmsg != "") {
 					delayCallback.error( errmsg );
 				} else {
+			        url = "http://" + __getLocalIpAddress() + ":" + port;
 	                delayCallback.success( url );
 				}
             }
