@@ -1,37 +1,43 @@
-What Can I do with CorHttpd?
-============================
-You can browser (locally or remotely) to access files in smartphone:
+## CorHttpd: embeded httpd for cordova ##
+------------------------------------------
+Supported platform:
+* iOS
+* Android
 
-* browse the files in smartphone with a browser in PC.
-* copy files from smartphone to PC quickly, just with Wifi.
+You can browse (locally or remotely) to access files in android/ios phone/pad:
+
+* browse the files in mobile device with a browser in PC.
+* copy files from mobile device to PC quickly, just with Wifi.
 * use cordova webview to access the assets/www/ content with http protocol.
 
-Why http protocol is needed?
-============================
-* Just use wifi instead of cable, more convenient.
-* The most popular phaser.js game engine, does not support loading resource from local file system. It's big bottle neck to deploy HTML5 games to Cordova platform. Because of security reason, browser does not support local AJAX calls.
+Why http access is good?
 
-How to use?
-============================
+* Use wifi instead of cable, more convenient.
+* For security reason, browser does not support local AJAX calls. It's big bottle neck to deploy HTML5 games to Cordova platform. 
+* The most popular phaser.js game engine, a httpd is always required, as it use AJAX to load resource. 
+
+## How to use CorHttpd? ##
+--------------------------
 
 Add the plugin to your cordova project:
 
     cordova plugin add https://github.com/floatinghotpot/cordova-httpd.git
 
-Copy the test/index.html, test/htdocs to www/ and play around.    
+Quick start, copy the demo files, and just build to play.
 
-Javascript APIs
-=============================
+    cp -r plugins/com.rjfun.cordova.httpd/test/* www/
+    
+## Javascript APIs ##
+---------------------
 
 * startServer( options, success_callback, error_callback );
 * stopServer( success_callback, error_callback );
 * getURL( success_callback, error_callback );
 * getLocalPath( success_callback, error_callback );
     
-Example code:
+Example code: (read the comments)
 
 ```javascript
-
     var httpd = null;
     function onDeviceReady() {
         httpd = ( cordova && cordova.plugins && cordova.plugins.CorHttpd ) ? cordova.plugins.CorHttpd : null;
@@ -39,9 +45,10 @@ Example code:
     function updateStatus() {
     	document.getElementById('location').innerHTML = "document.location.href: " + document.location.href;
     	if( httpd ) {
-    	  // use this function to get status of httpd
-    	  // if server is up, it will return http://<server's ip>:port/
-    	  // if server is down, it will return empty string ""
+    	  /* use this function to get status of httpd
+    	  * if server is up, it will return http://<server's ip>:port/
+    	  * if server is down, it will return empty string ""
+    	  */
     		httpd.getURL(function(url){
     			if(url.length > 0) {
     				document.getElementById('url').innerHTML = "server is up: <a href='" + url + "' target='_blank'>" + url + "</a>";
@@ -64,11 +71,12 @@ Example code:
     	    	if(url.length > 0) {
     	    		document.getElementById('url').innerHTML = "server is up: <a href='" + url + "' target='_blank'>" + url + "</a>";
 	    	    } else {
-	    	        // wwwroot is the root dir of web server, it can be absolute or relative path
-	    	        // if a relative path is given, it will be relative to cordova assets/www/ in APK.
-	    	        // "", by default, it will point to cordova assets/www/
-	    	        // if a absolute path is given, it will access file system.
-	    	        // "/", set the root dir as the www root, it maybe a security issue, but very powerful to browse all dir
+	    	        /* wwwroot is the root dir of web server, it can be absolute or relative path
+	    	        * if a relative path is given, it will be relative to cordova assets/www/ in APK.
+	    	        * "", by default, it will point to cordova assets/www/, it's good to use 'htdocs' for 'www/htdocs'
+	    	        * if a absolute path is given, it will access file system.
+	    	        * "/", set the root dir as the www root, it maybe a security issue, but very powerful to browse all dir
+	    	        */
     	    	    httpd.startServer({
     	    	    	'www_root' : wwwroot,
     	    	    	'port' : 8080
@@ -99,6 +107,4 @@ Example code:
     		alert('CorHttpd plugin not available/ready.');
     	}
     }
-
-
 ```
