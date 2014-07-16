@@ -1,5 +1,5 @@
 ## CorHttpd: embeded httpd for cordova ##
-------------------------------------------
+
 Supported platform:
 * iOS
 * Android
@@ -17,7 +17,6 @@ Why http access is good?
 * The most popular phaser.js game engine, a httpd is always required, as it use AJAX to load resource. 
 
 ## How to use CorHttpd? ##
---------------------------
 
 Add the plugin to your cordova project:
 
@@ -28,7 +27,6 @@ Quick start, copy the demo files, and just build to play.
     cp -r plugins/com.rjfun.cordova.httpd/test/* www/
     
 ## Javascript APIs ##
----------------------
 
 * startServer( options, success_callback, error_callback );
 * stopServer( success_callback, error_callback );
