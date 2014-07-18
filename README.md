@@ -28,11 +28,17 @@ Quick start, copy the demo files, and just build to play.
     
 ## Javascript APIs ##
 
-* startServer( options, success_callback, error_callback );
-* stopServer( success_callback, error_callback );
-* getURL( success_callback, error_callback );
-* getLocalPath( success_callback, error_callback );
-    
+```javascript
+
+startServer( options, success_callback, error_callback );
+
+stopServer( success_callback, error_callback );
+
+getURL( success_callback, error_callback );
+
+getLocalPath( success_callback, error_callback );
+```
+
 Example code: (read the comments)
 
 ```javascript
