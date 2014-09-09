@@ -106,3 +106,13 @@ Example code: (read the comments)
     	}
     }
 ```
+
+# Credits #
+
+This Cordova plugin is built based on following 2 projects, and thanks to the authors.
+
+* [NanoHTTPD](https://github.com/NanoHttpd/nanohttpd), written in java, for java / android, by psh.
+* [CocoaHTTPServer](https://github.com/robbiehanson/CocoaHTTPServer), written in Obj-C, for iOS / Mac OS X, by robbiehanson.
+
+What I've done is embedding the server into cordova plugin. Feel free to fork, improve and send pull request. 
+
