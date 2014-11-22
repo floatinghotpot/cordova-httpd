@@ -7,7 +7,8 @@ var corhttpd_exports = {};
 corhttpd_exports.startServer = function(options, success, error) {
 	  var defaults = {
 			    'www_root': '',
-			    'port': 8888
+			    'port': 8888,
+			    'localhost_only': false
 			  };
 	  
 	  // Merge optional settings into defaults.
@@ -17,7 +18,7 @@ corhttpd_exports.startServer = function(options, success, error) {
 	    }
 	  }
 			  
-  exec(success, error, "CorHttpd", "startServer", [ defaults['www_root'], defaults['port'] ]);
+  exec(success, error, "CorHttpd", "startServer", [ defaults ]);
 };
 
 corhttpd_exports.stopServer = function(success, error) {

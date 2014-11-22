@@ -14,7 +14,10 @@
 @property(nonatomic, retain) HTTPServer *httpServer;
 @property(nonatomic, retain) NSString *localPath;
 @property(nonatomic, retain) NSString *url;
+
+@property (nonatomic, retain) NSString* www_root;
 @property (assign) int port;
+@property (assign) BOOL localhost_only;
 
 - (void)startServer:(CDVInvokedUrlCommand*)command;
 - (void)stopServer:(CDVInvokedUrlCommand*)command;
@@ -37,6 +40,13 @@
 #define IP_ADDR_IPv4    @"ipv4"
 #define IP_ADDR_IPv6    @"ipv6"
 
+#define OPT_WWW_ROOT        @"www_root"
+#define OPT_PORT            @"port"
+#define OPT_LOCALHOST_ONLY  @"localhost_only"
+
+#define IP_LOCALHOST        @"127.0.0.1"
+#define IP_ANY              @"0.0.0.0"
+
 - (NSString *)getIPAddress:(BOOL)preferIPv4
 {
     NSArray *searchArray = preferIPv4 ?
@@ -52,7 +62,7 @@
          address = addresses[key];
          if(address) *stop = YES;
      } ];
-    return address ? address : @"0.0.0.0";
+    return address ? address : IP_ANY;
 }
 
 - (NSDictionary *)getIPAddresses
@@ -100,13 +110,26 @@
     self.httpServer = nil;
     self.localPath = @"";
     self.url = @"";
+    
+    self.www_root = @"";
+    self.port = 8888;
+    self.localhost_only = false;
 }
 
 - (void)startServer:(CDVInvokedUrlCommand*)command
 {
     CDVPluginResult* pluginResult = nil;
-    NSString* wwwRoot = [command.arguments objectAtIndex:0];
-    int port = [[command.arguments objectAtIndex:1] intValue];
+    
+    NSDictionary* options = [command.arguments objectAtIndex:0];
+    
+    NSString* str = [options valueForKey:OPT_WWW_ROOT];
+    if(str) self.www_root = str;
+    
+    str = [options valueForKey:OPT_PORT];
+    if(str) self.port = [str intValue];
+    
+    str = [options valueForKey:OPT_LOCALHOST_ONLY];
+    if(str) self.localhost_only = [str boolValue];
 
     if(self.httpServer != nil) {
         if([self.httpServer isRunning]) {
@@ -114,12 +137,6 @@
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
             return;
         }
-    }
-    
-    if (wwwRoot == nil) {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"wwwRoot is missing"];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-        return;
     }
     
     [DDLog addLogger:[DDTTYLogger sharedInstance]];
@@ -134,15 +151,17 @@
     // However, for easy testing you may want force a certain port so you can just hit the refresh button.
     // [httpServer setPort:12345];
     
-    [self.httpServer setPort:port];
+    [self.httpServer setPort:self.port];
+    
+    if(self.localhost_only) [self.httpServer setInterface:IP_LOCALHOST];
     
     // Serve files from our embedded Web folder
-    const char * str = [wwwRoot UTF8String];
-    if(*str == '/') {
-        self.localPath = wwwRoot;
+    const char * docroot = [self.www_root UTF8String];
+    if(*docroot == '/') {
+        self.localPath = self.www_root;
     } else {
         NSString* basePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
-        self.localPath = [NSString stringWithFormat:@"%@/%@", basePath, wwwRoot];
+        self.localPath = [NSString stringWithFormat:@"%@/%@", basePath, self.www_root];
     }
     NSLog(@"Setting document root: %@", self.localPath);
     [self.httpServer setDocumentRoot:self.localPath];
@@ -150,9 +169,8 @@
 	NSError *error;
 	if([self.httpServer start:&error]) {
         int listenPort = [self.httpServer listeningPort];
+        NSString* ip = self.localhost_only ? IP_LOCALHOST : [self getIPAddress:YES];
 		NSLog(@"Started httpd on port %d", listenPort);
-        
-        NSString* ip = [self getIPAddress:YES];
         self.url = [NSString stringWithFormat:@"http://%@:%d/", ip, listenPort];
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:self.url];
         

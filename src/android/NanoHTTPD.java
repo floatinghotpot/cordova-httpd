@@ -9,8 +9,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.URLEncoder;
 import java.util.Date;
 import java.util.Enumeration;
@@ -217,6 +219,33 @@ public class NanoHTTPD
 	// Socket & server code
 	// ==================================================
 
+	/**
+	 * Starts a HTTP server to given port.<p>
+	 * Throws an IOException if the socket is already in use
+	 */
+	public NanoHTTPD(InetSocketAddress localAddr, AndroidFile wwwroot) throws IOException
+	{
+		myTcpPort = localAddr.getPort();
+		myRootDir = wwwroot;
+		myServerSocket = new ServerSocket();
+		myServerSocket.bind(localAddr);
+		myThread = new Thread( new Runnable()
+		{
+			public void run()
+			{
+				try
+				{
+					while( true )
+						new HTTPSession( myServerSocket.accept());
+				}
+				catch ( IOException ioe )
+				{}
+			}
+		});
+		myThread.setDaemon( true );
+		myThread.start();
+	}
+	
 	/**
 	 * Starts a HTTP server to given port.<p>
 	 * Throws an IOException if the socket is already in use

@@ -83,7 +83,8 @@ Example code: (read the comments)
 	    	        */
     	    	    httpd.startServer({
     	    	    	'www_root' : wwwroot,
-    	    	    	'port' : 8080
+    	    	    	'port' : 8080,
+    	    	    	'localhost_only' : false
     	    	    }, function( url ){
     	    	      // if server is up, it will return the url of http://<server ip>:port/
     	    	      // the ip is the active network connection
@@ -120,5 +121,11 @@ This Cordova plugin is built based on following 2 projects, and thanks to the au
 * [NanoHTTPD](https://github.com/NanoHttpd/nanohttpd), written in java, for java / android, by psh.
 * [CocoaHTTPServer](https://github.com/robbiehanson/CocoaHTTPServer), written in Obj-C, for iOS / Mac OS X, by robbiehanson.
 
-What I've done is embedding the server into cordova plugin. Feel free to fork, improve and send pull request. 
+You can use this plugin for FREE. Feel free to fork, improve and send pull request. 
+
+If need prompt support, please [buy a license](http://rjfun.github.io/), you will be supported with high priority.
+
+More Cordova/PhoneGap plugins by Raymond Xie, [find them in plugin registry](http://plugins.cordova.io/#/search?search=rjfun).
+
+Project outsourcing and consulting service is also available. Please [contact us](mailto:rjfun.mobile@gmail.com) if you have the business needs.
 
