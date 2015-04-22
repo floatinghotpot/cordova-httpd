@@ -38,8 +38,7 @@ public class WebServer extends NanoHTTPD
     public Response serve( String uri, String method, Properties header, Properties parms, Properties files )
     {
         if (customURIs.length > 0) {
-            int i = 0;
-            for (i = 0; i < customURIs.length; i++) {
+            for (int i = 0; i < customURIs.length; i++) {
                 String testURI = customURIs[i];
                 if (uri.startsWith(testURI)) {
                     Log.i( LOGTAG, method + " '" + uri + "' " );
@@ -47,11 +46,10 @@ public class WebServer extends NanoHTTPD
                     return serveFile( newURI, header, (AndroidFile) customPaths.get(testURI), true );
                 }
             }
-            if (i == customURIs.length) {
-                super.serve( uri, method, header, parms, files );
+            return super.serve( uri, method, header, parms, files );
             }
         } else {
-            super.serve( uri, method, header, parms, files );
+            return super.serve( uri, method, header, parms, files );
         }
     }
 }
