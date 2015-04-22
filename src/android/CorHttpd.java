@@ -164,7 +164,7 @@ public class CorHttpd extends CordovaPlugin {
                             if (path.length() > 0) {
                                 path = "www/" + path;
                             } else {
-                                path = "www/";
+                                path = "www";
                             }
                         }
                         Log.w(LOGTAG, "Custom URL - " + key + " - " + path);
