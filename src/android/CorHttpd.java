@@ -162,7 +162,9 @@ public class CorHttpd extends CordovaPlugin {
                         String path = jsonCustomPaths.optString(key);
                         if (!path.startsWith("/")) {
                             if (path.length() > 0) {
-                                path = "www" + "/" + path;
+                                path = "www/" + path;
+                            } else {
+                                path = "www/";
                             }
                         }
                         Log.w(LOGTAG, "Custom URL - " + key + " - " + path);
