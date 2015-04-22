@@ -47,7 +47,6 @@ public class WebServer extends NanoHTTPD
                 }
             }
             return super.serve( uri, method, header, parms, files );
-            }
         } else {
             return super.serve( uri, method, header, parms, files );
         }
