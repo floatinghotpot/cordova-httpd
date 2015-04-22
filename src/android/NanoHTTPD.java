@@ -427,7 +427,7 @@ public class NanoHTTPD
 
 				// If the method is POST, there may be parameters
 				// in data section, too, read it:
-				if ( method.equalsIgnoreCase( "POST" ))
+				if ( "POST".equalsIgnoreCase( method ))
 				{
 					String contentType = "";
 					String contentTypeHeader = header.getProperty("content-type");
@@ -466,7 +466,7 @@ public class NanoHTTPD
 					}
 				}
 
-				if ( method.equalsIgnoreCase( "PUT" ))
+				if ( "PUT".equalsIgnoreCase( method ))
 					files.put("content", saveTmpFile( fbuf, 0, f.size()));
 
 				// Ok, now do the serve()
