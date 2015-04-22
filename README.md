@@ -79,12 +79,18 @@ Example code: (read the comments)
 	    	        * if a relative path is given, it will be relative to cordova assets/www/ in APK.
 	    	        * "", by default, it will point to cordova assets/www/, it's good to use 'htdocs' for 'www/htdocs'
 	    	        * if a absolute path is given, it will access file system.
-	    	        * "/", set the root dir as the www root, it maybe a security issue, but very powerful to browse all dir
+	    	        * "/", set the root dir as the www root, it maybe a security issue, but very powerful to browse all dir.
+	    	        * Note the use of custom_paths (which is entirely optionaly) allows you to specify different base
+	    	        * URLs, and where to serve the content from for that URL. This allows you for example to serve
+	    	        * content from both the read only app storage area, as well as the read-write data directory.
 	    	        */
     	    	    httpd.startServer({
     	    	    	'www_root' : wwwroot,
     	    	    	'port' : 8080,
-    	    	    	'localhost_only' : false
+    	    	    	'localhost_only' : false,
+    	    	    	'custom_paths' : {
+    	    	    	    '/rw/' : cordova.file.dataDirectory.substring(7)
+    	    	    	}
     	    	    }, function( url ){
     	    	      // if server is up, it will return the url of http://<server ip>:port/
     	    	      // the ip is the active network connection
