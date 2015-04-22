@@ -31,24 +31,23 @@ public class WebServer extends NanoHTTPD
         int i = 0;
         Iterator keys = customPaths.keySet().iterator();
         while (keys.hasNext()) {
-            customURIs[i++] = (String) keys.next();
+            String path = (String) keys.next();
+            customURIs[i] = path;
+            i++;
+            Log.i( LOGTAG, "Custom Path: " + path);
         }
     }
     
     public Response serve( String uri, String method, Properties header, Properties parms, Properties files )
     {
-        if (customURIs.length > 0) {
-            for (int i = 0; i < customURIs.length; i++) {
-                String testURI = customURIs[i];
-                if (uri.startsWith(testURI)) {
-                    Log.i( LOGTAG, method + " '" + uri + "' " );
-                    String newURI = uri.substring(testURI.length());
-                    return serveFile( newURI, header, (AndroidFile) customPaths.get(testURI), true );
-                }
+        for (int i = 0; i < customURIs.length; i++) {
+            String testURI = customURIs[i];
+            if (uri.startsWith(testURI)) {
+                Log.i( LOGTAG, method + " '" + uri + "' " );
+                String newURI = uri.substring(testURI.length());
+                return serveFile( newURI, header, (AndroidFile) customPaths.get(testURI), true );
             }
-            return super.serve( uri, method, header, parms, files );
-        } else {
-            return super.serve( uri, method, header, parms, files );
         }
+        return super.serve( uri, method, header, parms, files );
     }
 }
