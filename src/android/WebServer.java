@@ -10,7 +10,7 @@ import java.util.Properties;
 public class WebServer extends NanoHTTPD
 {
     private Map customPaths = null;
-    private String[] customURIs = String[];
+    private String[] customURIs = new String[0];
     private final String LOGTAG = "NanoHTTPD-Cordova";
     
 	public WebServer(InetSocketAddress localAddr, AndroidFile wwwroot, Map customPaths ) throws IOException {
