@@ -23,7 +23,7 @@ public class WebServer extends NanoHTTPD
         addCustomPaths(customPaths);
 	}
     
-    private addCustomPaths(Map customPaths) {
+    private void addCustomPaths(Map customPaths) {
         this.customPaths = customPaths;
         customURIs = new String[customPaths.keySet().size()];
         int i = 0;
