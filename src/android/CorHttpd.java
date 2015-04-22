@@ -161,7 +161,9 @@ public class CorHttpd extends CordovaPlugin {
                         String key = (String) keys.next();
                         String path = jsonCustomPaths.optString(key);
                         if (!path.startsWith("/")) {
-                            path = "www" + path.length() > 0 ? "/" + path : "";
+                            if (path.length() > 0) {
+                                path = "www" + "/" + path;
+                            }
                         }
                         Log.w(LOGTAG, "Custom URL - " + key + " - " + path);
                         AndroidFile p = new AndroidFile(path);

@@ -7,6 +7,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
+import android.util.Log;
+
 public class WebServer extends NanoHTTPD
 {
     private Map customPaths = null;
@@ -42,14 +44,14 @@ public class WebServer extends NanoHTTPD
                 if (uri.startsWith(testURI)) {
                     Log.i( LOGTAG, method + " '" + uri + "' " );
                     String newURI = uri.substring(testURI.length());
-                    return serveFile( newURI, header, customPaths.get(testURI), true );
+                    return serveFile( newURI, header, (AndroidFile) customPaths.get(testURI), true );
                 }
             }
             if (i == customURIs.length) {
-                super( uri, method, header, parms, files );
+                super.serve( uri, method, header, parms, files );
             }
         } else {
-            super( uri, method, header, parms, files );
+            super.serve( uri, method, header, parms, files );
         }
     }
 }
