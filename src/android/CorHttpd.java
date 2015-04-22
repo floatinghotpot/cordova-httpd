@@ -7,6 +7,9 @@ import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
@@ -42,6 +45,7 @@ public class CorHttpd extends CordovaPlugin {
     private static final String OPT_WWW_ROOT = "www_root";
     private static final String OPT_PORT = "port";
     private static final String OPT_LOCALHOST_ONLY = "localhost_only";
+    private static final String OPT_CUSTOM_PATHS = "custom_paths";
 
     private String www_root = "";
 	private int port = 8888;
@@ -50,6 +54,8 @@ public class CorHttpd extends CordovaPlugin {
 	private String localPath = "";
 	private WebServer server = null;
 	private String	url = "";
+    private Map customPaths = null;
+    private JSONObject jsonCustomPaths = null;
 
     @Override
     public boolean execute(String action, JSONArray inputs, CallbackContext callbackContext) throws JSONException {
@@ -107,6 +113,7 @@ public class CorHttpd extends CordovaPlugin {
         www_root = options.optString(OPT_WWW_ROOT);
         port = options.optInt(OPT_PORT, 8888);
         localhost_only = options.optBoolean(OPT_LOCALHOST_ONLY, false);
+        jsonCustomPaths = options.optJSONObject(OPT_CUSTOM_PATHS);
         
         if(www_root.startsWith("/")) {
     		//localPath = Environment.getExternalStorageDirectory().getAbsolutePath();
@@ -146,11 +153,29 @@ public class CorHttpd extends CordovaPlugin {
 			AssetManager am = ctx.getResources().getAssets();
     		f.setAssetManager( am );
     		
+            if (jsonCustomPaths != null) {
+                Iterator keys = jsonCustomPaths.keys();
+                if (keys != null) {
+                    customPaths = new HashMap(jsonCustomPaths.length());
+                    while (keys.hasNext()) {
+                        String key = (String) keys.next();
+                        String path = jsonCustomPaths.optString(key);
+                        if (!path.startsWith("/")) {
+                            path = "www" + path.length() > 0 ? "/" + path : "";
+                        }
+                        Log.w(LOGTAG, "Custom URL - " + key + " - " + path);
+                        AndroidFile p = new AndroidFile(path);
+                        p.setAssetManager( am );
+                        customPaths.put(key, p);
+                    }
+                }
+            }
+            
     		if(localhost_only) {
     			InetSocketAddress localAddr = InetSocketAddress.createUnresolved("127.0.0.1", port);
-    			server = new WebServer(localAddr, f);
+    			server = new WebServer(localAddr, f, customPaths);
     		} else {
-    			server = new WebServer(port, f);
+    			server = new WebServer(port, f, customPaths);
     		}
 		} catch (IOException e) {
 			errmsg = String.format("IO Exception: %s", e.getMessage());
