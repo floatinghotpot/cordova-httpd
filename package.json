@@ -1,0 +1,33 @@
+{
+  "name": "cordova-plugin-httpd",
+  "version": "0.9.2",
+  "description": "Cordova Plugin to embed httpd (web server) into Cordova App",
+  "cordova": {
+    "id": "cordova-plugin-httpd",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/floatinghotpot/cordova-httpd.git"
+  },
+  "bugs": {
+    "url": "https://github.com/floatinghotpot/cordova-httpd/issues"
+  },
+  "keywords": [
+    "cordova",
+    "ecosystem:cordova",
+    "http",
+    "httpd",
+    "web",
+    "server",
+    "rjfun"
+  ],
+  "author": {
+    "name": "Raymond Xie",
+    "email": "rjfun.mobile@gmail.com"
+  },
+  "license": "MIT"
+}
