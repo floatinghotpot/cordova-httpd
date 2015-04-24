@@ -1,6 +1,12 @@
 #import <Foundation/Foundation.h>
 #import "HTTPConnection.h"
 #import "HTTPLogging.h"
+    
+@interface CustomPathHTTPConnection : HTTPConnection
++ (NSDictionary *) customPaths;
++ (void) setCustomPaths:(NSDictionary *) cusPaths;
+- (NSString *)filePathForURI:(NSString *)path allowDirectory:(BOOL)allowDirectory documentRoot:(NSString *) documentRoot;
+@end
 
 @implementation CustomPathHTTPConnection : HTTPConnection
 static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
