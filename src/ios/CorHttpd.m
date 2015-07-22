@@ -5,6 +5,7 @@
 #import "DDLog.h"
 #import "DDTTYLogger.h"
 #import "HTTPServer.h"
+#import "CustomPathHTTPConnection.h"
 
 @interface CorHttpd : CDVPlugin {
     // Member variables go here.
@@ -14,6 +15,7 @@
 @property(nonatomic, retain) HTTPServer *httpServer;
 @property(nonatomic, retain) NSString *localPath;
 @property(nonatomic, retain) NSString *url;
+@property(nonatomic, retain) NSMutableDictionary *customPaths;
 
 @property (nonatomic, retain) NSString* www_root;
 @property (assign) int port;
@@ -43,6 +45,7 @@
 #define OPT_WWW_ROOT        @"www_root"
 #define OPT_PORT            @"port"
 #define OPT_LOCALHOST_ONLY  @"localhost_only"
+#define OPT_CUSTOM_PATHS    @"custom_paths"
 
 #define IP_LOCALHOST        @"127.0.0.1"
 #define IP_ANY              @"0.0.0.0"
@@ -141,6 +144,31 @@
     
     [DDLog addLogger:[DDTTYLogger sharedInstance]];
     self.httpServer = [[HTTPServer alloc] init];
+    
+    [self.httpServer setConnectionClass:[CustomPathHTTPConnection class]];
+    
+    NSDictionary* customPathsFromOptions = (NSDictionary *)[options valueForKey:OPT_CUSTOM_PATHS];
+    if (customPathsFromOptions == nil) {
+        self.customPaths = [NSMutableDictionary dictionaryWithCapacity:0];
+    } else {
+        self.customPaths = [NSMutableDictionary dictionaryWithCapacity:[customPathsFromOptions count]];
+        [customPathsFromOptions enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop)
+         {
+             NSString* customPath = (NSString*) key;
+             NSString* path = (NSString*) obj;
+             NSString* localPath = nil;
+             const char * docroot = [path UTF8String];
+             if(*docroot == '/' || [path hasPrefix:@"http://"] || [path hasPrefix:@"https://"]) {
+                 localPath = path;
+             } else {
+                 NSString* basePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
+                 localPath = [NSString stringWithFormat:@"%@/%@", basePath, path];
+             }
+             NSLog(@"Custom Path: %@ - %@", customPath, localPath);
+             [self.customPaths setObject:localPath forKey:customPath];
+         }];
+    }
+    [CustomPathHTTPConnection setCustomPaths:self.customPaths];
     
     // Tell the server to broadcast its presence via Bonjour.
     // This allows browsers such as Safari to automatically discover our service.
