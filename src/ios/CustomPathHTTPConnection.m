@@ -1,18 +1,69 @@
 #import <Foundation/Foundation.h>
+#import "CustomPathHTTPConnection.h"
 #import "HTTPConnection.h"
 #import "HTTPLogging.h"
-    
-@interface CustomPathHTTPConnection : HTTPConnection
-+ (NSDictionary *) customPaths;
-+ (void) setCustomPaths:(NSDictionary *) cusPaths;
-- (NSString *)filePathForURI:(NSString *)path allowDirectory:(BOOL)allowDirectory documentRoot:(NSString *) documentRoot;
-@end
+#import "HTTPResponse.h"
+#import "HTTPErrorResponse.h"
+#import "HTTPDataResponse.h"
 
 @implementation CustomPathHTTPConnection : HTTPConnection
 static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 static NSDictionary * customPaths = nil;
 + (NSDictionary *) customPaths { @synchronized(self) { return customPaths; } }
 + (void) setCustomPaths:(NSDictionary *) cusPaths { @synchronized(self) { customPaths = cusPaths; } }
+
+/**
+ * This method is called to get a response for a request.
+ * You may return any object that adopts the HTTPResponse protocol.
+ * The HTTPServer comes with two such classes: HTTPFileResponse and HTTPDataResponse.
+ * HTTPFileResponse is a wrapper for an NSFileHandle object, and is the preferred way to send a file response.
+ * HTTPDataResponse is a wrapper for an NSData object, and may be used to send a custom response.
+ **/
+- (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path
+{
+    HTTPLogTrace();
+    
+    __block NSObject<HTTPResponse> * httpResponseReturnable = nil;
+
+    /*
+     * The following block of code determins if the URL you have requested should be backended to the named
+     * URL in the custom path. If it does, we'll make a synchronous request for it, and generate a
+     * HTTPDataResponse object and pass that back. If the backend throws any errors, we'll generate a
+     * HTTPErrorRepsonse object with the status code, and pass that back. If none of these match, we'll
+     * allow the existing code to happen.
+     */
+    [CustomPathHTTPConnection.customPaths enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop)
+     {
+         NSString* customPath = (NSString*) key;
+         if ([path hasPrefix:customPath] && ([obj hasPrefix:@"http://"] || [obj hasPrefix:@"https://"])) {
+             *stop = YES;
+             NSString* subPath = [path substringFromIndex:[customPath length]];
+             NSURL *realURL = [NSURL URLWithString: [(NSString *) obj stringByAppendingString: subPath]];
+             // turn it into a request and use NSData to load its content
+             NSURLRequest *urlRequest = [NSURLRequest requestWithURL:realURL];
+             NSHTTPURLResponse * urlResponse = nil;
+             NSError * error = nil;
+             NSData * data = [NSURLConnection sendSynchronousRequest:urlRequest returningResponse:&urlResponse error:&error];
+             
+             if (error != nil) {
+                 httpResponseReturnable = [[HTTPErrorResponse alloc] initWithErrorCode: (int) urlResponse.statusCode];
+             } else {
+                 httpResponseReturnable = [[HTTPDataResponseWithHeaders alloc] initWithDataAndHeaders: data httpHeaders:urlResponse.allHeaderFields];
+             }
+         }
+     }];
+    
+    if (httpResponseReturnable != nil)
+    {
+        return httpResponseReturnable;
+    }
+    else
+    {
+        return [super httpResponseForMethod:path URI:path];
+    }
+
+}
+
 
 - (NSString *)filePathForURI:(NSString *)path allowDirectory:(BOOL)allowDirectory
 {
@@ -124,5 +175,23 @@ static NSDictionary * customPaths = nil;
     }
     
     return fullPath;
+}
+@end
+
+@implementation HTTPDataResponseWithHeaders : HTTPDataResponse
+- (id)initWithDataAndHeaders:(NSData *)dataToUse httpHeaders:(NSDictionary *) httpHeaders
+{
+    if((self = [super initWithData: dataToUse]))
+    {
+        headers = [NSMutableDictionary dictionaryWithDictionary:httpHeaders];
+        [(NSMutableDictionary *) headers removeObjectForKey:@"Content-Encoding"];
+        [(NSMutableDictionary *) headers removeObjectForKey:@"Content-Length"];
+    }
+    return self;
+}
+
+- (NSDictionary *)httpHeaders
+{
+    return headers;
 }
 @end

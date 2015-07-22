@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.lang.InterruptedException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -832,15 +833,18 @@ public class NanoHTTPD
 
 				if ( data != null )
 				{
-					int pending = data.available();	// This is to support partial sends, see serveFile()
 					byte[] buff = new byte[theBufferSize];
-					while (pending>0)
+                    int read;
+					while ((read = data.read( buff, 0, theBufferSize)) != -1 )
 					{
-						int read = data.read( buff, 0, ( (pending>theBufferSize) ?  theBufferSize : pending ));
-						if (read <= 0)	break;
-						out.write( buff, 0, read );
-						pending -= read;
-					}
+                        if (read == 0) {
+                            try {
+                                Thread.sleep(50);
+                            } catch (InterruptedException e) {}
+                        } else {
+                            out.write(buff, 0, read);
+                        }
+                    }
 				}
 				out.flush();
 				out.close();

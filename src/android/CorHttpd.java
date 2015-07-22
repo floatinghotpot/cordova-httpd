@@ -160,7 +160,7 @@ public class CorHttpd extends CordovaPlugin {
                     while (keys.hasNext()) {
                         String key = (String) keys.next();
                         String path = jsonCustomPaths.optString(key);
-                        if (!path.startsWith("/")) {
+                        if (!path.startsWith("/") && !path.startsWith("http://") && !path.startsWith("https://")) {
                             if (path.length() > 0) {
                                 path = "www/" + path;
                             } else {
@@ -168,9 +168,13 @@ public class CorHttpd extends CordovaPlugin {
                             }
                         }
                         Log.w(LOGTAG, "Custom URL - " + key + " - " + path);
-                        AndroidFile p = new AndroidFile(path);
-                        p.setAssetManager( am );
-                        customPaths.put(key, p);
+                        if (path.startsWith("http://") || path.startsWith("https://" )) {
+                            customPaths.put(key, path);
+                        } else {
+                            AndroidFile p = new AndroidFile(path);
+                            p.setAssetManager(am);
+                            customPaths.put(key, p);
+                        }
                     }
                 }
             }

@@ -158,7 +158,7 @@
              NSString* path = (NSString*) obj;
              NSString* localPath = nil;
              const char * docroot = [path UTF8String];
-             if(*docroot == '/') {
+             if(*docroot == '/' || [path hasPrefix:@"http://"] || [path hasPrefix:@"https://"]) {
                  localPath = path;
              } else {
                  NSString* basePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
