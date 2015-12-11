@@ -1199,9 +1199,15 @@ static NSMutableArray *recentNonces;
 			response = [self newMultiRangeResponse:contentLength];
 		}
 	}
-	
+
+	// Add optional lastModified header
+	if ([httpResponse respondsToSelector:@selector(lastModified)])
+	{
+		[response setHeaderField:@"Last-Modified" value:[self dateAsString:[httpResponse lastModified]]];
+	}
+
 	BOOL isZeroLengthResponse = !isChunked && (contentLength == 0);
-    
+
 	// If they issue a 'HEAD' command, we don't have to include the file
 	// If they issue a 'GET' command, we need to include the file
 	

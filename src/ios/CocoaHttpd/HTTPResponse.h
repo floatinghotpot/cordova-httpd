@@ -62,6 +62,11 @@
 - (NSInteger)status;
 
 /**
+ * LastModified date of the data.
+ **/
+- (NSDate *)lastModified;
+
+/**
  * If you want to add any extra HTTP headers to the response,
  * simply return them in a dictionary in this method.
 **/
