@@ -178,7 +178,7 @@
 		NSLog(@"Error starting httpd: %@", error);
         
         NSString* errmsg = [error description];
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:errmsg];
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:errmsg];
 	}
     
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
