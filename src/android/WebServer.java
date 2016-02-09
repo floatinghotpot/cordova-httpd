@@ -9,6 +9,8 @@ import java.net.MalformedURLException;
 import java.net.InetSocketAddress;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
@@ -31,7 +33,7 @@ public class WebServer extends NanoHTTPD
 		super(port, wwwroot);
         addCustomPaths(customPaths);
 	}
-    
+
     private void addCustomPaths(Map customPaths) {
         this.customPaths = customPaths;
         customURIs = new String[customPaths.keySet().size()];
@@ -41,7 +43,15 @@ public class WebServer extends NanoHTTPD
             String path = (String) keys.next();
             customURIs[i] = path;
             i++;
-            Log.i( LOGTAG, "Custom Path: " + path);
+        }
+        Arrays.sort(customURIs, new Comparator<String>() {
+            @Override
+            public int compare(String s, String t1) {
+                return t1.length() - s.length();
+            }
+        });
+        for (i = 0; i < customURIs.length; i++) {
+            Log.i( LOGTAG, "Custom Path: " + customURIs[i]);
         }
     }
     
