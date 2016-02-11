@@ -1,6 +1,5 @@
 package com.rjfun.cordova.httpd;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -17,12 +16,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.net.wifi.WifiManager;
-import android.os.Environment;
 import android.util.Log;
 import android.content.Context;
-import android.content.Intent;
-import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 
 /**
