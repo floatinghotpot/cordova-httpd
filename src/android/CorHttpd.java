@@ -12,7 +12,8 @@ import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.PluginResult;
 import org.apache.cordova.PluginResult.Status;
-import org.apache.http.conn.util.InetAddressUtils;
+import java.net.Inet4Address;
+//import org.apache.http.conn.util.InetAddressUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -84,7 +85,8 @@ public class CorHttpd extends CordovaPlugin {
                     InetAddress inetAddress = enumIpAddr.nextElement();
                     if (! inetAddress.isLoopbackAddress()) {
                     	String ip = inetAddress.getHostAddress();
-                    	if(InetAddressUtils.isIPv4Address(ip)) {
+                    	//if(InetAddressUtils.isIPv4Address(ip)) {
+                        if(inetAddress instanceof Inet4Address){
                     		Log.w(LOGTAG, "local IP: "+ ip);
                     		return ip;
                     	}

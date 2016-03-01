@@ -425,9 +425,13 @@ public class NanoHTTPD
 				ByteArrayInputStream bin = new ByteArrayInputStream(fbuf);
 				BufferedReader in = new BufferedReader( new InputStreamReader(bin));
 
+				if(method==null){
+					Log.e(LOGTAG, "Error: method is null:"+ method);
+				}
+
 				// If the method is POST, there may be parameters
 				// in data section, too, read it:
-				if ( method.equalsIgnoreCase( "POST" ))
+				else if ( method.equalsIgnoreCase( "POST" ))
 				{
 					String contentType = "";
 					String contentTypeHeader = header.getProperty("content-type");
@@ -466,15 +470,20 @@ public class NanoHTTPD
 					}
 				}
 
-				if ( method.equalsIgnoreCase( "PUT" ))
+				else if ( method.equalsIgnoreCase( "PUT" ))
 					files.put("content", saveTmpFile( fbuf, 0, f.size()));
 
-				// Ok, now do the serve()
-				Response r = serve( uri, method, header, parms, files );
-				if ( r == null )
-					sendError( HTTP_INTERNALERROR, "SERVER INTERNAL ERROR: Serve() returned a null response." );
-				else
-					sendResponse( r.status, r.mimeType, r.header, r.data );
+                if(uri == null || method == null){
+                    sendError( HTTP_BADREQUEST, "Bad Request" );
+                }
+                else{
+                    // Ok, now do the serve()
+                    Response r = serve( uri, method, header, parms, files );
+                    if ( r == null )
+                        sendError( HTTP_INTERNALERROR, "SERVER INTERNAL ERROR: Serve() returned a null response." );
+                    else
+                        sendResponse( r.status, r.mimeType, r.header, r.data );
+                }
 
 				in.close();
 				is.close();
