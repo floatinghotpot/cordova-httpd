@@ -51,13 +51,39 @@ public class CorHttpd extends CordovaPlugin {
 	private String localPath = "";
 	private WebServer server = null;
 	private String	url = "";
+    
+    private PluginResult setCallback(CallbackContext callbackContext) {
+        Log.w(LOGTAG, "setCallback");
+        this._callback = callbackContext;
+        PluginResult result = new PluginResult(PluginResult.Status.OK, "Callback set");
+        result.setKeepCallback(true);
+        callbackContext.sendPluginResult(result);
+        return result;
+    }
+
+    // This method will be fired later.
+    public void onServeEvent(String uri) {
+        if(_callback != null) {
+            try {
+                JSONObject parameter = new JSONObject();
+                parameter.put("uri",uri);
+
+                PluginResult result = new PluginResult(PluginResult.Status.OK, parameter);
+                result.setKeepCallback(true);
+                Log.d(LOGTAG,"Passing parameters in callback"+ parameter.toString());
+                _callback.sendPluginResult(result);
+
+            } catch (JSONException e) {
+                Log.e(LOGTAG, e.toString());
+            }
+        }
+    }
 
     @Override
     public boolean execute(String action, JSONArray inputs, CallbackContext callbackContext) throws JSONException {
         PluginResult result = null;
         if (ACTION_START_SERVER.equals(action)) {
             result = startServer(inputs, callbackContext);
-            
         } else if (ACTION_STOP_SERVER.equals(action)) {
             result = stopServer(inputs, callbackContext);
             
@@ -66,8 +92,11 @@ public class CorHttpd extends CordovaPlugin {
             
         } else if (ACTION_GET_LOCAL_PATH.equals(action)) {
             result = getLocalPath(inputs, callbackContext);
-            
-        } else {
+        } 
+        else if(ACTION_SET_CALLBACK.equals(action)){
+            result = setCallback(callbackContext);
+        }
+        else {
             Log.d(LOGTAG, String.format("Invalid action passed: %s", action));
             result = new PluginResult(Status.INVALID_ACTION);
         }
@@ -152,11 +181,19 @@ public class CorHttpd extends CordovaPlugin {
 			AssetManager am = ctx.getResources().getAssets();
     		f.setAssetManager( am );
     		
+            EventCallBack eventCallBack = new EventCallBack(){
+                    public Void call(){
+                        String uri = this.getUri();
+                        onServeEvent(uri);
+                        return null;
+                    }
+                };
+            
     		if(localhost_only) {
     			InetSocketAddress localAddr = new InetSocketAddress(InetAddress.getByAddress(new byte[]{127,0,0,1}), port);
-    			server = new WebServer(localAddr, f);
+    			server = new WebServer(localAddr, f, eventCallBack);
     		} else {
-    			server = new WebServer(port, f);
+    			server = new WebServer(port, f, eventCallBack);
     		}
 		} catch (IOException e) {
 			errmsg = String.format("IO Exception: %s", e.getMessage());

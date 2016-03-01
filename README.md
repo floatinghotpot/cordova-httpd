@@ -114,6 +114,18 @@ Example code: (read the comments)
     }
 ```
 
+### Set Callback
+
+(ANDROID) It is now possible to add a callback to perform actions on each served request. It can be useful to make the app do something in reaction to serve, e.g. update UI, log, whatever...
+
+
+```javascript
+ httpd.setCallback(function(uri){console.log("uri", uri)});
+ 
+ //then navigate on address:port/your_uri from a client and you should see "uri" uri:"your_uri" on the dev tools
+```
+
+
 # Credits #
 
 This Cordova plugin is built based on following 2 projects, and thanks to the authors.
