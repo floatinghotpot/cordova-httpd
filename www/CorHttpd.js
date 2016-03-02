@@ -7,7 +7,8 @@ corhttpd_exports.startServer = function(options, success, error) {
     var defaults = {
         'www_root': '',
         'port': 8888,
-        'localhost_only': false
+        'localhost_only': false,
+        'allowDirectoryListing': false
     };
 
     // Merge optional settings into defaults.
@@ -32,10 +33,19 @@ corhttpd_exports.getLocalPath = function(success, error) {
     exec(success, error, "CorHttpd", "getLocalPath", []);
 };
 
-corhttpd_exports.setCallback = function(onChanged) {
-    exec(onChanged, function(err) {
+corhttpd_exports.addOnServeListener = function(onServeCallback, requestHandler) {
+    var reqHandler = typeof requestHandler === 'function'?requestHandler.toString():null;
+    var args = [];
+    if(reqHandler){
+    args.push(reqHandler);
+    }
+    exec(onServeCallback, function(err) {
         console.log(err);
-    }, 'CorHttpd', 'setCallback', []);
+    }, 'CorHttpd', 'onServe', args);
+};
+
+corhttpd_exports.removeOnServeListener = function(success, error) {
+    exec(success, error, 'CorHttpd', 'onServe', [null]);
 };
 
 module.exports = corhttpd_exports;

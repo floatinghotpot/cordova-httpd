@@ -13,11 +13,13 @@ import org.apache.cordova.CallbackContext;
 import org.apache.cordova.PluginResult;
 import org.apache.cordova.PluginResult.Status;
 import java.net.Inet4Address;
+import java.util.concurrent.Callable;
 //import org.apache.http.conn.util.InetAddressUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.app.usage.UsageEvents;
 import android.net.wifi.WifiManager;
 import android.os.Environment;
 import android.util.Log;
@@ -39,44 +41,59 @@ public class CorHttpd extends CordovaPlugin {
     private static final String ACTION_STOP_SERVER = "stopServer";
     private static final String ACTION_GET_URL = "getURL";
     private static final String ACTION_GET_LOCAL_PATH = "getLocalPath";
+    private static final String ACTION_SET_ON_SERVE_CALLBACK = "onServe";
     
     private static final String OPT_WWW_ROOT = "www_root";
     private static final String OPT_PORT = "port";
     private static final String OPT_LOCALHOST_ONLY = "localhost_only";
+    private static final String OPT_ALLOW_DIRECTORY_LISTING = "allowDirectoryListing";
 
     private String www_root = "";
 	private int port = 8888;
 	private boolean localhost_only = false;
+    private boolean allowDirectoryListing = false;
 
 	private String localPath = "";
 	private WebServer server = null;
 	private String	url = "";
-    
-    private PluginResult setCallback(CallbackContext callbackContext) {
-        Log.w(LOGTAG, "setCallback");
-        this._callback = callbackContext;
-        PluginResult result = new PluginResult(PluginResult.Status.OK, "Callback set");
-        result.setKeepCallback(true);
+
+    private CallbackContext _callback = null;
+
+    private PluginResult setOnServeCallback(JSONArray inputs,CallbackContext callbackContext) {
+        Log.w(LOGTAG, "setOnServeCallback");
+        boolean shouldAdd = true;
+        if(inputs.length() == 0) {
+            this._callback = callbackContext;
+        }
+        else{
+            try{
+                String val = inputs.getString(0);
+                shouldAdd = !val.equals("null");
+                if(shouldAdd){
+                    this._callback =null;
+                }
+            }
+            catch(JSONException ex){
+                Log.w(LOGTAG,"JSON Exception setOnServeCallback "+ex.toString());
+            }
+
+        }
+        PluginResult result = new PluginResult(PluginResult.Status.OK, "On Server Callback "+ (shouldAdd == true? "unset": "set"));
+        result.setKeepCallback(shouldAdd);
         callbackContext.sendPluginResult(result);
         return result;
     }
 
+
     // This method will be fired later.
-    public void onServeEvent(String uri) {
+    public Void onServeEvent(JSONObject parameters) {
         if(_callback != null) {
-            try {
-                JSONObject parameter = new JSONObject();
-                parameter.put("uri",uri);
-
-                PluginResult result = new PluginResult(PluginResult.Status.OK, parameter);
+                PluginResult result = new PluginResult(PluginResult.Status.OK, parameters);
                 result.setKeepCallback(true);
-                Log.d(LOGTAG,"Passing parameters in callback"+ parameter.toString());
-                _callback.sendPluginResult(result);
-
-            } catch (JSONException e) {
-                Log.e(LOGTAG, e.toString());
-            }
+                Log.d(LOGTAG, "Passing parameters in callback" + parameters.toString());
+            _callback.sendPluginResult(result);
         }
+        return null;
     }
 
     @Override
@@ -84,6 +101,7 @@ public class CorHttpd extends CordovaPlugin {
         PluginResult result = null;
         if (ACTION_START_SERVER.equals(action)) {
             result = startServer(inputs, callbackContext);
+            
         } else if (ACTION_STOP_SERVER.equals(action)) {
             result = stopServer(inputs, callbackContext);
             
@@ -92,9 +110,9 @@ public class CorHttpd extends CordovaPlugin {
             
         } else if (ACTION_GET_LOCAL_PATH.equals(action)) {
             result = getLocalPath(inputs, callbackContext);
-        } 
-        else if(ACTION_SET_CALLBACK.equals(action)){
-            result = setCallback(callbackContext);
+        }
+        else if(ACTION_SET_ON_SERVE_CALLBACK.equals(action)){
+            result = setOnServeCallback(callbackContext);
         }
         else {
             Log.d(LOGTAG, String.format("Invalid action passed: %s", action));
@@ -138,6 +156,7 @@ public class CorHttpd extends CordovaPlugin {
         www_root = options.optString(OPT_WWW_ROOT);
         port = options.optInt(OPT_PORT, 8888);
         localhost_only = options.optBoolean(OPT_LOCALHOST_ONLY, false);
+        allowDirectoryListing = options.optBoolean(OPT_ALLOW_DIRECTORY_LISTING, false);
         
         if(www_root.startsWith("/")) {
     		//localPath = Environment.getExternalStorageDirectory().getAbsolutePath();
@@ -180,21 +199,20 @@ public class CorHttpd extends CordovaPlugin {
 	        Context ctx = cordova.getActivity().getApplicationContext();
 			AssetManager am = ctx.getResources().getAssets();
     		f.setAssetManager( am );
-    		
+
             EventCallBack eventCallBack = new EventCallBack(){
-                    public Void call(){
-                        String uri = this.getUri();
-                        onServeEvent(uri);
-                        return null;
-                    }
-                };
-            
-    		if(localhost_only) {
-    			InetSocketAddress localAddr = new InetSocketAddress(InetAddress.getByAddress(new byte[]{127,0,0,1}), port);
-    			server = new WebServer(localAddr, f, eventCallBack);
-    		} else {
-    			server = new WebServer(port, f, eventCallBack);
-    		}
+                public Void call(){
+                    onServeEvent(this.getParameters());
+                    return null;
+                }
+            };
+
+            if(localhost_only) {
+                InetSocketAddress localAddr = new InetSocketAddress(InetAddress.getByAddress(new byte[]{127,0,0,1}), port);
+                server = new WebServer(localAddr, f, allowDirectoryListing, eventCallBack);
+            } else {
+                server = new WebServer(port, f, allowDirectoryListing, eventCallBack);
+            }
 		} catch (IOException e) {
 			errmsg = String.format("IO Exception: %s", e.getMessage());
 			Log.w(LOGTAG, errmsg);

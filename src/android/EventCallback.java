@@ -1,19 +1,21 @@
 package com.rjfun.cordova.httpd;
 
+import org.json.JSONObject;
+
 import java.util.concurrent.Callable;
 
 /**
  * Created by vitomacchia on 01/03/16.
  */
 public class EventCallBack implements Callable<Void> {
-    private String uri;
+    JSONObject parameters;
 
-    public void setUri(String uri){
-        this.uri = uri;
+    public void setParameters(JSONObject parameters){
+        this.parameters = parameters;
     }
 
-    public String getUri(){
-        return this.uri;
+    public JSONObject getParameters(){
+        return this.parameters;
     }
 
     public EventCallBack() {
