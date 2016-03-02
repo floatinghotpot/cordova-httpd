@@ -10,6 +10,7 @@ import java.util.Enumeration;
 
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.PluginResult;
 import org.apache.cordova.PluginResult.Status;
 import java.net.Inet4Address;
@@ -27,11 +28,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
+import android.webkit.ValueCallback;
+import android.webkit.WebView;
 
 /**
  * This class echoes a string called from JavaScript.
  */
 public class CorHttpd extends CordovaPlugin {
+
+    @android.webkit.JavascriptInterface
+    public void onData(String value) {
+        Log.w(LOGTAG,"Returned value from JS ="+ value);
+    }
+
 
     /** Common tag used for logging statements. */
     private static final String LOGTAG = "CorHttpd";
@@ -58,9 +67,11 @@ public class CorHttpd extends CordovaPlugin {
 	private String	url = "";
 
     private CallbackContext _callback = null;
+    private String _javascriptHandlerFunctionString = null;
+    private ResponseCallback _onserverResponse = new ResponseCallback();
 
     private PluginResult setOnServeCallback(JSONArray inputs,CallbackContext callbackContext) {
-        Log.w(LOGTAG, "setOnServeCallback");
+        Log.w(LOGTAG, "setOnServeCallback "+inputs.toString());
         boolean shouldAdd = true;
         if(inputs.length() == 0) {
             this._callback = callbackContext;
@@ -68,8 +79,13 @@ public class CorHttpd extends CordovaPlugin {
         else{
             try{
                 String val = inputs.getString(0);
+                Log.w(LOGTAG, "setOnServeCallback VAL = "+val);
                 shouldAdd = !val.equals("null");
                 if(shouldAdd){
+                    this._callback = callbackContext;
+                    this._javascriptHandlerFunctionString = val;
+                }
+                else{
                     this._callback =null;
                 }
             }
@@ -78,15 +94,15 @@ public class CorHttpd extends CordovaPlugin {
             }
 
         }
-        PluginResult result = new PluginResult(PluginResult.Status.OK, "On Server Callback "+ (shouldAdd == true? "unset": "set"));
+        PluginResult result = new PluginResult(PluginResult.Status.OK, "On Server Callback "+ (shouldAdd == true? "SET": "UNset"));
         result.setKeepCallback(shouldAdd);
         callbackContext.sendPluginResult(result);
         return result;
     }
 
-
     // This method will be fired later.
     public Void onServeEvent(JSONObject parameters) {
+        Log.d(LOGTAG, "onServeEvent: " + (_callback == null ? "No Callback" : "will call back!"));
         if(_callback != null) {
                 PluginResult result = new PluginResult(PluginResult.Status.OK, parameters);
                 result.setKeepCallback(true);
@@ -95,6 +111,31 @@ public class CorHttpd extends CordovaPlugin {
         }
         return null;
     }
+
+    public void getDynamicResponse(){
+        final ResponseCallback respCb = this._onserverResponse;
+        final CordovaWebView webView = this.webView;
+        //Stupid cordova hides precious Android WebView
+        final WebView androidWebView = (WebView)webView.getEngine().getView();
+        final String jsHandler = this._javascriptHandlerFunctionString;
+        //-------------------------
+        if(jsHandler!= null){
+            androidWebView.post(new Runnable() {
+                @Override
+                public void run() {
+                    androidWebView.evaluateJavascript("(" + jsHandler + ")();", new ValueCallback<String>() {
+                        @Override
+                        public void onReceiveValue(String returnedValue) {
+                            Log.d("LogName", returnedValue); //s is Java null
+                            _onserverResponse.setResponse(returnedValue);
+                        }
+                    });
+                }
+            });
+        }
+
+//        return _onserverResponse.getResponse();
+    };
 
     @Override
     public boolean execute(String action, JSONArray inputs, CallbackContext callbackContext) throws JSONException {
@@ -112,7 +153,7 @@ public class CorHttpd extends CordovaPlugin {
             result = getLocalPath(inputs, callbackContext);
         }
         else if(ACTION_SET_ON_SERVE_CALLBACK.equals(action)){
-            result = setOnServeCallback(callbackContext);
+            result = setOnServeCallback(inputs, callbackContext);
         }
         else {
             Log.d(LOGTAG, String.format("Invalid action passed: %s", action));
@@ -200,6 +241,8 @@ public class CorHttpd extends CordovaPlugin {
 			AssetManager am = ctx.getResources().getAssets();
     		f.setAssetManager( am );
 
+            final ResponseCallback responseCallback = this._onserverResponse;
+
             EventCallBack eventCallBack = new EventCallBack(){
                 public Void call(){
                     onServeEvent(this.getParameters());
@@ -209,9 +252,9 @@ public class CorHttpd extends CordovaPlugin {
 
             if(localhost_only) {
                 InetSocketAddress localAddr = new InetSocketAddress(InetAddress.getByAddress(new byte[]{127,0,0,1}), port);
-                server = new WebServer(localAddr, f, allowDirectoryListing, eventCallBack);
+                server = new WebServer(localAddr, f, allowDirectoryListing, eventCallBack, responseCallback);
             } else {
-                server = new WebServer(port, f, allowDirectoryListing, eventCallBack);
+                server = new WebServer(port, f, allowDirectoryListing, eventCallBack, responseCallback);
             }
 		} catch (IOException e) {
 			errmsg = String.format("IO Exception: %s", e.getMessage());

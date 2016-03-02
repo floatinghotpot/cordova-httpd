@@ -34,10 +34,10 @@ corhttpd_exports.getLocalPath = function(success, error) {
 };
 
 corhttpd_exports.addOnServeListener = function(onServeCallback, requestHandler) {
-    var reqHandler = typeof requestHandler === 'function'?requestHandler.toString():null;
+    var reqHandler = typeof requestHandler === 'function' ? requestHandler.toString() : null;
     var args = [];
     if(reqHandler){
-    args.push(reqHandler);
+        args.push(reqHandler);
     }
     exec(onServeCallback, function(err) {
         console.log(err);

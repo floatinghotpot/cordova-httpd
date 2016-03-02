@@ -18,17 +18,21 @@ public class WebServer extends NanoHTTPD
     private EventCallBack _callback = null;
 	private Boolean _allowDirectoryListing;
 	private AndroidFile _rootDirectory;
-    //private Callable<Void> _callback = null;
+    private ResponseCallback _responseCallback = null;
 
-	public WebServer(InetSocketAddress localAddr, AndroidFile wwwroot, Boolean allowDirectoryListing, EventCallBack callback) throws IOException {
+	public WebServer(InetSocketAddress localAddr, AndroidFile wwwroot, Boolean allowDirectoryListing, EventCallBack callback, ResponseCallback responseCallback) throws IOException {
 		super(localAddr, wwwroot);
+        this._rootDirectory=wwwroot;
         this._callback = callback;
+        this._responseCallback = responseCallback;
 		this._allowDirectoryListing = allowDirectoryListing;
 	}
 
-	public WebServer(int port, AndroidFile wwwroot, Boolean allowDirectoryListing, EventCallBack callback) throws IOException {
+	public WebServer(int port, AndroidFile wwwroot, Boolean allowDirectoryListing, EventCallBack callback, ResponseCallback responseCallback) throws IOException {
 		super(port, wwwroot);
+        this._rootDirectory=wwwroot;
         this._callback = callback;
+        this._responseCallback = responseCallback;
 		this._allowDirectoryListing = allowDirectoryListing;
 	}
 
@@ -39,8 +43,6 @@ public class WebServer extends NanoHTTPD
 
         if(this._callback!=null){
             try{
-               // this._callback.setUri(uri);
-               // this._callback.setMethod(method);
                 JSONObject cbParams = new JSONObject();
                 cbParams.put("uri",uri);
                 cbParams.put("method",method);
@@ -77,14 +79,32 @@ public class WebServer extends NanoHTTPD
             }
         }
 
-        //Response res =  super.serve(uri, method, header, parms, files);
-		Response res = super.serveFile(uri, header, _rootDirectory, _allowDirectoryListing);
-        if(res == null){
-            Log.i( LOGTAG, "response is null");
-            return new Response(HTTP_NOTFOUND, MIME_PLAINTEXT, "No such file or directory"+(uri == null ? "":uri.toString()));
+        if(_responseCallback!=null){
+            try {
+                Response res = _responseCallback.call();
+                if(res == null){
+                    Log.i( LOGTAG, "response is null");
+                    return new Response(HTTP_INTERNALERROR,MIME_PLAINTEXT,"Internal Server error" );
+                }
+                else{
+                    return res;
+                }
+            }
+            catch(Exception ex){
+                Log.e(LOGTAG, "Server error:"+ ex.toString());
+                return new Response(HTTP_INTERNALERROR,MIME_PLAINTEXT,"Server error: "+ ex.toString() );
+            }
         }
         else{
-            return res;
+            Response res = super.serveFile(uri, header, _rootDirectory, _allowDirectoryListing);
+            if(res == null){
+                Log.i( LOGTAG, "response is null");
+                return new Response(HTTP_NOTFOUND, MIME_PLAINTEXT, "No such file or directory"+(uri == null ? "":uri.toString()));
+            }
+            else{
+                return res;
+            }
         }
+
 	}
 }
