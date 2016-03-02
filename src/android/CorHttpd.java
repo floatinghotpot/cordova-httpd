@@ -15,6 +15,7 @@ import org.apache.cordova.PluginResult;
 import org.apache.cordova.PluginResult.Status;
 import java.net.Inet4Address;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 //import org.apache.http.conn.util.InetAddressUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -108,12 +109,24 @@ public class CorHttpd extends CordovaPlugin {
                 result.setKeepCallback(true);
                 Log.d(LOGTAG, "Passing parameters in callback" + parameters.toString());
             _callback.sendPluginResult(result);
+            CountDownLatch signal = new CountDownLatch(1); //1 to wait
+            _onserverResponse.setSignal(signal);
+            Log.i(LOGTAG, "---------------------- Signal set");
+            try{
+                getDynamicResponse();
+                signal.await();
+                Log.i(LOGTAG, "++++++++++++++++++++++ Signal UNLOCKED!");
+            }
+            catch(Exception ex){
+                Log.e(LOGTAG, "Signal broken "+ex.toString());
+            }
+
         }
         return null;
     }
 
     public void getDynamicResponse(){
-        final ResponseCallback respCb = this._onserverResponse;
+//        final ResponseCallback respCb = this._onserverResponse;
         final CordovaWebView webView = this.webView;
         //Stupid cordova hides precious Android WebView
         final WebView androidWebView = (WebView)webView.getEngine().getView();
@@ -126,15 +139,15 @@ public class CorHttpd extends CordovaPlugin {
                     androidWebView.evaluateJavascript("(" + jsHandler + ")();", new ValueCallback<String>() {
                         @Override
                         public void onReceiveValue(String returnedValue) {
-                            Log.d("LogName", returnedValue); //s is Java null
+                            Log.d(LOGTAG, "VALUE RECVD from JAVASCRIPT"+returnedValue); //s is Java null
                             _onserverResponse.setResponse(returnedValue);
+                            _onserverResponse._signal.countDown();
+  //                          _onserverResponse.setResponse(returnedValue);
                         }
                     });
                 }
             });
         }
-
-//        return _onserverResponse.getResponse();
     };
 
     @Override
@@ -241,7 +254,7 @@ public class CorHttpd extends CordovaPlugin {
 			AssetManager am = ctx.getResources().getAssets();
     		f.setAssetManager( am );
 
-            final ResponseCallback responseCallback = this._onserverResponse;
+            ResponseCallback responseCallback = this._onserverResponse;
 
             EventCallBack eventCallBack = new EventCallBack(){
                 public Void call(){

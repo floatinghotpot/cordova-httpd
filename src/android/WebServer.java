@@ -10,6 +10,7 @@ import java.net.InetSocketAddress;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 
 public class WebServer extends NanoHTTPD
 {
@@ -19,6 +20,13 @@ public class WebServer extends NanoHTTPD
 	private Boolean _allowDirectoryListing;
 	private AndroidFile _rootDirectory;
     private ResponseCallback _responseCallback = null;
+
+    private ResponseListener _responseListener = new ResponseListener() {
+        @Override
+        public void onReceive() {
+            Log.i(LOGTAG, "Response Listener onReceive");
+        }
+    };
 
 	public WebServer(InetSocketAddress localAddr, AndroidFile wwwroot, Boolean allowDirectoryListing, EventCallBack callback, ResponseCallback responseCallback) throws IOException {
 		super(localAddr, wwwroot);
@@ -40,6 +48,7 @@ public class WebServer extends NanoHTTPD
 	public Response serve( String uri, String method, Properties header, Properties parms, Properties files )
 	{
 		Log.i(LOGTAG, method + " '" + uri + "' ");
+        _responseListener.onReceive();
 
         if(this._callback!=null){
             try{
@@ -72,6 +81,7 @@ public class WebServer extends NanoHTTPD
 
                 this._callback.setParameters(cbParams);
                 Log.d(LOGTAG, "Calling callback "+uri);
+                //Call javascript and return request information
                 this._callback.call();
             }
             catch(Exception ex){
@@ -82,6 +92,7 @@ public class WebServer extends NanoHTTPD
         if(_responseCallback!=null){
             try {
                 Response res = _responseCallback.call();
+
                 if(res == null){
                     Log.i( LOGTAG, "response is null");
                     return new Response(HTTP_INTERNALERROR,MIME_PLAINTEXT,"Internal Server error" );
