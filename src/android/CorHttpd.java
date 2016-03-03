@@ -67,88 +67,26 @@ public class CorHttpd extends CordovaPlugin {
 	private WebServer server = null;
 	private String	url = "";
 
-    private CallbackContext _callback = null;
-    private String _javascriptHandlerFunctionString = null;
-    private ResponseCallback _onserverResponse = new ResponseCallback();
-
     private PluginResult setOnServeCallback(JSONArray inputs,CallbackContext callbackContext) {
         Log.w(LOGTAG, "setOnServeCallback "+inputs.toString());
-        boolean shouldAdd = true;
-        if(inputs.length() == 0) {
-            this._callback = callbackContext;
-        }
-        else{
-            try{
-                String val = inputs.getString(0);
-                Log.w(LOGTAG, "setOnServeCallback VAL = "+val);
-                shouldAdd = !val.equals("null");
-                if(shouldAdd){
-                    this._callback = callbackContext;
-                    this._javascriptHandlerFunctionString = val;
-                }
-                else{
-                    this._callback =null;
-                }
+        boolean shouldAdd =true;
+        try {
+            String val = inputs.getString(0);
+            shouldAdd = !val.equals("null");
+            if(shouldAdd){
+                server.setResponseCallback(val);
             }
-            catch(JSONException ex){
-                Log.w(LOGTAG,"JSON Exception setOnServeCallback "+ex.toString());
+            else{
+                server.setResponseCallback(null);
             }
-
         }
-        PluginResult result = new PluginResult(PluginResult.Status.OK, "On Server Callback "+ (shouldAdd == true? "SET": "UNset"));
-        result.setKeepCallback(shouldAdd);
+        catch(JSONException ex){
+            Log.w(LOGTAG,"JSON Exception setOnServeCallback "+ex.toString());
+        }
+        PluginResult result = new PluginResult(PluginResult.Status.OK, "Server Callback "+ (shouldAdd == true? "SET": "UNset"));
         callbackContext.sendPluginResult(result);
         return result;
     }
-
-    // This method will be fired later.
-    public Void onServeEvent(JSONObject parameters) {
-        Log.d(LOGTAG, "onServeEvent: " + (_callback == null ? "No Callback" : "will call back!"));
-        if(_callback != null) {
-                PluginResult result = new PluginResult(PluginResult.Status.OK, parameters);
-                result.setKeepCallback(true);
-                Log.d(LOGTAG, "Passing parameters in callback" + parameters.toString());
-            _callback.sendPluginResult(result);
-            CountDownLatch signal = new CountDownLatch(1); //1 to wait
-            _onserverResponse.setSignal(signal);
-            Log.i(LOGTAG, "---------------------- Signal set");
-            try{
-                getDynamicResponse();
-                signal.await();
-                Log.i(LOGTAG, "++++++++++++++++++++++ Signal UNLOCKED!");
-            }
-            catch(Exception ex){
-                Log.e(LOGTAG, "Signal broken "+ex.toString());
-            }
-
-        }
-        return null;
-    }
-
-    public void getDynamicResponse(){
-//        final ResponseCallback respCb = this._onserverResponse;
-        final CordovaWebView webView = this.webView;
-        //Stupid cordova hides precious Android WebView
-        final WebView androidWebView = (WebView)webView.getEngine().getView();
-        final String jsHandler = this._javascriptHandlerFunctionString;
-        //-------------------------
-        if(jsHandler!= null){
-            androidWebView.post(new Runnable() {
-                @Override
-                public void run() {
-                    androidWebView.evaluateJavascript("(" + jsHandler + ")();", new ValueCallback<String>() {
-                        @Override
-                        public void onReceiveValue(String returnedValue) {
-                            Log.d(LOGTAG, "VALUE RECVD from JAVASCRIPT"+returnedValue); //s is Java null
-                            _onserverResponse.setResponse(returnedValue);
-                            _onserverResponse._signal.countDown();
-  //                          _onserverResponse.setResponse(returnedValue);
-                        }
-                    });
-                }
-            });
-        }
-    };
 
     @Override
     public boolean execute(String action, JSONArray inputs, CallbackContext callbackContext) throws JSONException {
@@ -254,20 +192,11 @@ public class CorHttpd extends CordovaPlugin {
 			AssetManager am = ctx.getResources().getAssets();
     		f.setAssetManager( am );
 
-            ResponseCallback responseCallback = this._onserverResponse;
-
-            EventCallBack eventCallBack = new EventCallBack(){
-                public Void call(){
-                    onServeEvent(this.getParameters());
-                    return null;
-                }
-            };
-
             if(localhost_only) {
                 InetSocketAddress localAddr = new InetSocketAddress(InetAddress.getByAddress(new byte[]{127,0,0,1}), port);
-                server = new WebServer(localAddr, f, allowDirectoryListing, eventCallBack, responseCallback);
+                server = new WebServer(localAddr, f, allowDirectoryListing, webView);
             } else {
-                server = new WebServer(port, f, allowDirectoryListing, eventCallBack, responseCallback);
+                server = new WebServer(port, f, allowDirectoryListing, webView);
             }
 		} catch (IOException e) {
 			errmsg = String.format("IO Exception: %s", e.getMessage());

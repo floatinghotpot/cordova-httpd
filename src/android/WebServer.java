@@ -1,7 +1,10 @@
 package com.rjfun.cordova.httpd;
 
 import android.util.Log;
+import android.webkit.ValueCallback;
+import android.webkit.WebView;
 
+import org.apache.cordova.CordovaWebView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -15,42 +18,87 @@ import java.util.concurrent.CountDownLatch;
 public class WebServer extends NanoHTTPD
 {
 	private final String LOGTAG = "WebServer";
-
-    private EventCallBack _callback = null;
 	private Boolean _allowDirectoryListing;
 	private AndroidFile _rootDirectory;
-    private ResponseCallback _responseCallback = null;
 
-    private ResponseListener _responseListener = new ResponseListener() {
-        @Override
-        public void onReceive() {
-            Log.i(LOGTAG, "Response Listener onReceive");
-        }
-    };
+    private CordovaWebView _webView;
 
-	public WebServer(InetSocketAddress localAddr, AndroidFile wwwroot, Boolean allowDirectoryListing, EventCallBack callback, ResponseCallback responseCallback) throws IOException {
+    private String _javascriptHandlerFunctionString = null;
+    private ResponseCallback _onserverResponse = new ResponseCallback();
+
+	public WebServer(InetSocketAddress localAddr, AndroidFile wwwroot, Boolean allowDirectoryListing, CordovaWebView webView) throws IOException {
 		super(localAddr, wwwroot);
         this._rootDirectory=wwwroot;
-        this._callback = callback;
-        this._responseCallback = responseCallback;
 		this._allowDirectoryListing = allowDirectoryListing;
+        this._webView = webView;
 	}
 
-	public WebServer(int port, AndroidFile wwwroot, Boolean allowDirectoryListing, EventCallBack callback, ResponseCallback responseCallback) throws IOException {
+	public WebServer(int port, AndroidFile wwwroot, Boolean allowDirectoryListing, CordovaWebView webView) throws IOException {
 		super(port, wwwroot);
         this._rootDirectory=wwwroot;
-        this._callback = callback;
-        this._responseCallback = responseCallback;
 		this._allowDirectoryListing = allowDirectoryListing;
+        this._webView = webView;
 	}
+
+    //Sets a callback that will serve response which is defined in JavaScript
+    public void setResponseCallback(String responseHandler){
+        this._javascriptHandlerFunctionString = responseHandler;
+    }
+
+    public Void onServeEvent(final JSONObject parameters) {
+        Log.d(LOGTAG, "onServeEvent: " + (_javascriptHandlerFunctionString == null ? "No Callback" : "will call back!"));
+        if(_javascriptHandlerFunctionString != null) {
+            CountDownLatch signal = new CountDownLatch(1); //1 to wait
+            _onserverResponse.setSignal(signal);
+            Log.i(LOGTAG, "---------------------- Signal set");
+            try{
+                final CordovaWebView webView = this._webView;
+                //Stupid cordova hides precious Android WebView
+                final WebView androidWebView = (WebView)webView.getEngine().getView();
+                final String jsHandler = this._javascriptHandlerFunctionString;
+                androidWebView.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        androidWebView.evaluateJavascript("(" + jsHandler + ")("+parameters.toString()+");", new ValueCallback<String>() {
+                            @Override
+                            public void onReceiveValue(String returnedValue) {
+                                Log.d(LOGTAG, "VALUE RECVD from JAVASCRIPT"+returnedValue);
+                                try {
+                                    //returnValue is null when JS returns void, "null" when returned value is JS null
+                                    if(returnedValue == null || returnedValue.equals("null")){
+                                        //Will cause the server to try to find a file on the disk with normal static behavior
+                                        _onserverResponse.setNullResponse();
+                                    }else{
+                                        JSONObject returnedParams = new JSONObject(returnedValue);
+                                        _onserverResponse.setParams(returnedParams);
+                                    }
+                                }
+                                catch(Exception ex){
+                                    Log.e(LOGTAG,"Error parsing returned value: "+ex.toString());
+                                }
+                                _onserverResponse._signal.countDown();
+                            }
+                        });
+                    }
+                });
+                signal.await();
+                Log.i(LOGTAG, "++++++++++++++++++++++ Signal UNLOCKED!");
+            }
+            catch(Exception ex){
+                Log.e(LOGTAG, "Signal broken "+ex.toString());
+            }
+
+        }
+        return null;
+    }
 
 	@Override
 	public Response serve( String uri, String method, Properties header, Properties parms, Properties files )
 	{
 		Log.i(LOGTAG, method + " '" + uri + "' ");
-        _responseListener.onReceive();
 
-        if(this._callback!=null){
+        //Dynamic behavior
+        if(this._javascriptHandlerFunctionString!=null){
             try{
                 JSONObject cbParams = new JSONObject();
                 cbParams.put("uri",uri);
@@ -77,45 +125,26 @@ public class WebServer extends NanoHTTPD
                     String value = (String)e.nextElement();
                     _files.put(value,files.getProperty(value));
                 }
-                cbParams.put("files",_files);
-
-                this._callback.setParameters(cbParams);
-                Log.d(LOGTAG, "Calling callback "+uri);
+                cbParams.put("files", _files);
+                Log.d(LOGTAG, "Calling Javascript callback ");
                 //Call javascript and return request information
-                this._callback.call();
-            }
-            catch(Exception ex){
-                Log.e(LOGTAG,"Exception invoking callback: "+ ex.toString());
-            }
-        }
-
-        if(_responseCallback!=null){
-            try {
-                Response res = _responseCallback.call();
-
-                if(res == null){
-                    Log.i( LOGTAG, "response is null");
-                    return new Response(HTTP_INTERNALERROR,MIME_PLAINTEXT,"Internal Server error" );
+                onServeEvent(cbParams);
+                Response res = _onserverResponse.call();
+                if(res == null){ //Try static behavior
+                    return super.serveFile(uri, header, _rootDirectory, _allowDirectoryListing);
                 }
                 else{
                     return res;
                 }
             }
             catch(Exception ex){
-                Log.e(LOGTAG, "Server error:"+ ex.toString());
-                return new Response(HTTP_INTERNALERROR,MIME_PLAINTEXT,"Server error: "+ ex.toString() );
+                Log.e(LOGTAG,"Exception invoking callback: "+ ex.toString());
+                return new Response(HTTP_INTERNALERROR,MIME_PLAINTEXT,"Internal Server error: "+ ex.toString() );
             }
         }
+        //Static behavior
         else{
-            Response res = super.serveFile(uri, header, _rootDirectory, _allowDirectoryListing);
-            if(res == null){
-                Log.i( LOGTAG, "response is null");
-                return new Response(HTTP_NOTFOUND, MIME_PLAINTEXT, "No such file or directory"+(uri == null ? "":uri.toString()));
-            }
-            else{
-                return res;
-            }
+            return super.serveFile(uri, header, _rootDirectory, _allowDirectoryListing);
         }
-
 	}
 }
