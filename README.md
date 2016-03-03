@@ -130,24 +130,28 @@ The javascript callback receives an object with the following parameters
 #### Static behavior but listening to serve event --> useful to log something
 ```javascript
  httpd.setRequestListener(function(params){console.log("Request parameters", params);}, onSuccess,onError); 
- //then navigate on address:port/your_uri from a client and you should see "uri" uri:"your_uri" on the dev tools
+ //then navigate on address:port/your_uri from a client and you should see "uri" uri:"your_uri", "method":"GET", etc. on the dev tools
 ```
 #### Dynamic behavior
+
+Just pass an object with a valid status code and mime type, and a string as content
+
 ```javascript
 var count =0;
- httpd.setRequestListener(function(params){console.log("Request parameters", params); return  {
+ httpd.setRequestListener(function(params){console.log("Request parameters", params); 
+    return  {
                 mimeType: 'text/html',
                 statusCode: 200,
                 content: "<h1>"+(count++)+"</h1>"
             };
-            }, onSuccess,onError); 
+    }, onSuccess,onError); 
  //then navigate on address:port/your_uri from a client and you should see "uri" uri:"your_uri" on the dev tools
+ //You should get an update counter each time you perform the request
 ```
 
 #### Unset listener
 ```javascript
  httpd.unsetRequestListener(onSuccess,onError); //equiv of passing null to the above 
- //then navigate on address:port/your_uri from a client and you should see "uri" uri:"your_uri" on the dev tools
 ```
 
 # Credits #
