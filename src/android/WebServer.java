@@ -24,7 +24,7 @@ public class WebServer extends NanoHTTPD
     private CordovaWebView _webView;
 
     private String _javascriptHandlerFunctionString = null;
-    private ResponseCallback _onserverResponse = new ResponseCallback();
+    private ResponseHandler responseHandler = new ResponseHandler();
 
 	public WebServer(InetSocketAddress localAddr, AndroidFile wwwroot, Boolean allowDirectoryListing, CordovaWebView webView) throws IOException {
 		super(localAddr, wwwroot);
@@ -40,6 +40,82 @@ public class WebServer extends NanoHTTPD
         this._webView = webView;
 	}
 
+    /**
+     * Created by vitomacchia on 02/03/16.
+     */
+    public class ResponseHandler{
+        private final String LOGTAG = "ResponseHandler";
+
+        NanoHTTPD.Response _response = null;
+        String _mimeType = NanoHTTPD.MIME_PLAINTEXT;
+        JSONObject _params = null;
+        CountDownLatch _signal=null;
+
+        public void setSignal(CountDownLatch signal){
+            this._signal=signal;
+        }
+
+        private String mapStatusCode(int code){
+            if(code <= 200 ){
+                return NanoHTTPD.HTTP_OK;
+            }
+            else if(code==206){
+                return NanoHTTPD.HTTP_PARTIALCONTENT;
+            }
+            else if(code==416){
+                return NanoHTTPD.HTTP_RANGE_NOT_SATISFIABLE;
+            }
+            else if(code==301){
+                return NanoHTTPD.HTTP_REDIRECT;
+            }
+            else if(code==304){
+                return NanoHTTPD.HTTP_NOTMODIFIED;
+            }
+            else if(code==403){
+                return NanoHTTPD.HTTP_FORBIDDEN;
+            }
+            else if(code==404){
+                return NanoHTTPD.HTTP_NOTFOUND;
+            }
+            else if(code==400){
+                return NanoHTTPD.HTTP_BADREQUEST;
+            }
+            else if(code==500){
+                return NanoHTTPD.HTTP_INTERNALERROR;
+            }
+            else{//501
+                return NanoHTTPD.HTTP_NOTIMPLEMENTED;
+            }
+        }
+
+        public void setParams(JSONObject params){
+            this._params = params;
+            try{
+                this._mimeType = _params.getString("mimeType");
+                String payload = _params.getString("content");
+                int statusCode = _params.getInt("statusCode");
+                this._response = new NanoHTTPD.Response(mapStatusCode(statusCode),_mimeType,payload);
+            }
+            catch(JSONException ex){
+                Log.w(LOGTAG, "JSON Exception parsing params: "+ex.toString());
+                this._response = new NanoHTTPD.Response( NanoHTTPD.HTTP_INTERNALERROR,NanoHTTPD.MIME_PLAINTEXT,"Internal Server error: "+ ex.toString());
+            }
+        }
+
+        public void setNullResponse(){
+            this._response = null;
+        }
+
+        public NanoHTTPD.Response getResponse(){
+            return this._response;
+        }
+
+        public ResponseHandler() {
+        }
+    };
+
+
+
     //Sets a callback that will serve response which is defined in JavaScript
     public void setResponseCallback(String responseHandler){
         this._javascriptHandlerFunctionString = responseHandler;
@@ -49,7 +125,7 @@ public class WebServer extends NanoHTTPD
         Log.d(LOGTAG, "onServeEvent: " + (_javascriptHandlerFunctionString == null ? "No Callback" : "will call back!"));
         if(_javascriptHandlerFunctionString != null) {
             CountDownLatch signal = new CountDownLatch(1); //1 to wait
-            _onserverResponse.setSignal(signal);
+            responseHandler.setSignal(signal);
             Log.i(LOGTAG, "---------------------- Signal set");
             try{
                 final CordovaWebView webView = this._webView;
@@ -67,16 +143,16 @@ public class WebServer extends NanoHTTPD
                                     //returnValue is null when JS returns void, "null" when returned value is JS null
                                     if(returnedValue == null || returnedValue.equals("null")){
                                         //Will cause the server to try to find a file on the disk with normal static behavior
-                                        _onserverResponse.setNullResponse();
+                                        responseHandler.setNullResponse();
                                     }else{
                                         JSONObject returnedParams = new JSONObject(returnedValue);
-                                        _onserverResponse.setParams(returnedParams);
+                                        responseHandler.setParams(returnedParams);
                                     }
                                 }
                                 catch(Exception ex){
                                     Log.e(LOGTAG,"Error parsing returned value: "+ex.toString());
                                 }
-                                _onserverResponse._signal.countDown();
+                                responseHandler._signal.countDown();
                             }
                         });
                     }
@@ -129,7 +205,7 @@ public class WebServer extends NanoHTTPD
                 Log.d(LOGTAG, "Calling Javascript callback ");
                 //Call javascript and return request information
                 onServeEvent(cbParams);
-                Response res = _onserverResponse.call();
+                Response res = responseHandler.getResponse();
                 if(res == null){ //Try static behavior
                     return super.serveFile(uri, header, _rootDirectory, _allowDirectoryListing);
                 }

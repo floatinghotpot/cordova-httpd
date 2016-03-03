@@ -114,17 +114,41 @@ Example code: (read the comments)
     }
 ```
 
-### Set Callback
+### Dynamic Behavior
 
-(ANDROID) It is now possible to add a callback to perform actions on each served request. It can be useful to make the app do something in reaction to serve, e.g. update UI, log, whatever...
+(ANDROID) It is now possible to add a callback to perform actions on each served request. 
+It can be useful to make the app do something in reaction to serve, e.g. update UI, log, whatever...
+By returning a request object as specified in the example, it may serve dynami contents!
 
+The javascript callback receives an object with the following parameters
 
+* **uri** uri of the request
+* **method** uri of the request
+* **headers** (Object) key-value pairs headers of the request
+* **properties** (Object) key-value pairs querystring/body parameters of the request
+
+#### Static behavior but listening to serve event --> useful to log something
 ```javascript
- httpd.setCallback(function(uri){console.log("uri", uri)});
- 
+ httpd.setRequestListener(function(params){console.log("Request parameters", params);}, onSuccess,onError); 
+ //then navigate on address:port/your_uri from a client and you should see "uri" uri:"your_uri" on the dev tools
+```
+#### Dynamic behavior
+```javascript
+var count =0;
+ httpd.setRequestListener(function(params){console.log("Request parameters", params); return  {
+                mimeType: 'text/html',
+                statusCode: 200,
+                content: "<h1>"+(count++)+"</h1>"
+            };
+            }, onSuccess,onError); 
  //then navigate on address:port/your_uri from a client and you should see "uri" uri:"your_uri" on the dev tools
 ```
 
+#### Unset listener
+```javascript
+ httpd.unsetRequestListener(onSuccess,onError); //equiv of passing null to the above 
+ //then navigate on address:port/your_uri from a client and you should see "uri" uri:"your_uri" on the dev tools
+```
 
 # Credits #
 

@@ -33,13 +33,15 @@ corhttpd_exports.getLocalPath = function(success, error) {
     exec(success, error, "CorHttpd", "getLocalPath", []);
 };
 
-corhttpd_exports.addRequestListener = function(requestHandler, success, error) {
-    var reqHandler = typeof requestHandler === 'function' ? requestHandler.toString() : null;
-    var args = [reqHandler];
-    exec(success, error, 'CorHttpd', 'onServe', args);
+corhttpd_exports.setRequestListener = function(requestHandler, success, error) {
+    var reqHandler = null;
+    if (typeof requestHandler === 'function') {
+        reqHandler = requestHandler.toString()
+    }
+    exec(success, error, 'CorHttpd', 'onServe', [reqHandler]);
 };
 
-corhttpd_exports.removeRequestListener = function(success, error) {
+corhttpd_exports.unsetRequestListener = function(success, error) {
     exec(success, error, 'CorHttpd', 'onServe', [null]);
 };
 

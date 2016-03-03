@@ -84,7 +84,6 @@ public class CorHttpd extends CordovaPlugin {
             Log.w(LOGTAG,"JSON Exception setOnServeCallback "+ex.toString());
         }
         PluginResult result = new PluginResult(PluginResult.Status.OK, "Server Callback "+ (shouldAdd == true? "SET": "UNset"));
-        callbackContext.sendPluginResult(result);
         return result;
     }
 
