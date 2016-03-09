@@ -8,7 +8,8 @@ corhttpd_exports.startServer = function(options, success, error) {
         'www_root': '',
         'port': 8888,
         'localhost_only': false,
-        'allowDirectoryListing': false
+        'allowDirectoryListing': false,  //android only
+        'serverTimeout': 10 //android only
     };
 
     // Merge optional settings into defaults.
@@ -33,16 +34,38 @@ corhttpd_exports.getLocalPath = function(success, error) {
     exec(success, error, "CorHttpd", "getLocalPath", []);
 };
 
-corhttpd_exports.setRequestListener = function(requestHandler, success, error) {
-    var reqHandler = null;
-    if (typeof requestHandler === 'function') {
-        reqHandler = requestHandler.toString()
+//--------- ANDROID ONLY ------------------------
+var _setResponse = function(response){
+    var resp = null;
+    if(response!==null && typeof response !== 'undefined'){
+        if(response.hasOwnProperty('mimeType') 
+        && response.hasOwnProperty('statusCode') 
+        && response.hasOwnProperty('content')){
+            resp = response;
+        }
     }
-    exec(success, error, 'CorHttpd', 'onServe', [reqHandler]);
+    exec(function(){
+      //  console.log("Server running again...", arguments);
+    },function(err){
+        console.error("Error setting server response", err);
+    },'CorHttpd','serverRun', [resp]);
+}
+
+corhttpd_exports.setRequestListener = function(requestHandler, success, error) {
+    //This function will be called on each request
+    function onRequest(request){
+        if(typeof request === 'boolean'){
+            success(request);
+        }
+        else{
+            requestHandler(request, _setResponse);
+        }
+    }
+    exec(onRequest, error, 'CorHttpd', 'onServe', [true]);
 };
 
 corhttpd_exports.unsetRequestListener = function(success, error) {
-    exec(success, error, 'CorHttpd', 'onServe', [null]);
+    exec(success, error, 'CorHttpd', 'onServe', [false]);
 };
 
 module.exports = corhttpd_exports;

@@ -118,40 +118,86 @@ Example code: (read the comments)
 
 (ANDROID) It is now possible to add a callback to perform actions on each served request. 
 It can be useful to make the app do something in reaction to serve, e.g. update UI, log, whatever...
-By returning a request object as specified in the example, it may serve dynami contents!
+By returning a request object as specified in the example, it may serve dynamic contents!
 
-The javascript callback receives an object with the following parameters
+The javascript callback receives two parameters: request and done.  
+request is an object with the following fields:
 
-* **uri** uri of the request
-* **method** uri of the request
+* **uri** (String) uri of the request
+* **method** (String) uri of the request
 * **headers** (Object) key-value pairs headers of the request
 * **properties** (Object) key-value pairs querystring/body parameters of the request
 
-#### Static behavior but listening to serve event --> useful to log something
+done is the function that **must** be called to return the **response**.
+
+A **response** is an object with the following fields, or **null**
+* **mimeType** (String) mime type
+* **statusCode** (Number) HTTP status code
+* **content** (String) respose body
+
+*Known issues* not handling binary contents in response
+
+#### Static behavior but listening to serve event --> e.g. useful when logging something
+
+Static behavior is obtained by returning null or undefined, or without setting the handler.
+
 ```javascript
- httpd.setRequestListener(function(params){console.log("Request parameters", params);}, onSuccess,onError); 
- //then navigate on address:port/your_uri from a client and you should see "uri" uri:"your_uri", "method":"GET", etc. on the dev tools
+var handler = function(request, done){
+   console.log("Request parameters", request);
+   done();
+};
+
+httpd.setRequestListener(handler, onSuccess,onError); 
+//then navigate on address:port/your_uri from a client and you should see "uri" uri:"your_uri", "method":"GET", etc. on the dev tools
 ```
 #### Dynamic behavior
 
-Just pass an object with a valid status code and mime type, and a string as content
+Just pass an object with a valid status code and mime type, and a string as content. A more useful example.
 
 ```javascript
 var count =0;
- httpd.setRequestListener(function(params){console.log("Request parameters", params); 
-    return  {
-                mimeType: 'text/html',
-                statusCode: 200,
-                content: "<h1>"+(count++)+"</h1>"
-            };
-    }, onSuccess,onError); 
- //then navigate on address:port/your_uri from a client and you should see "uri" uri:"your_uri" on the dev tools
- //You should get an update counter each time you perform the request
+
+var handler = function(request, done){
+    var response;
+    if(request.method === 'GET'){
+        if(params.uri ==='/favicon.ico') //static - assuming it's in our www_root
+        {
+            done(response);
+        }
+        else{
+            //Let's set a timeout to set some async operation
+            setTimeout(function(){
+                console.log("Timeout expired");
+                count++;
+                response = {
+                    mimeType: 'text/html',
+                    statusCode: 200,
+                    content: '<h1 style="color:green;">You requested: '+request.uri+'</h1><p>Served requests: '+count+'</p>'
+                };
+                doneCallback(response);
+            },200);
+        }
+    }
+    else{ //we're not handling POST, but you may
+        response = {
+            mimeType: 'text/html',
+            statusCode: 400,
+            content: '<h1 style="color:red;">Bad Request</h1>'
+        };
+        done(response);
+    }
+};
+ 
+httpd.setRequestListener(handler, onSuccess,onError); 
+//then navigate on address:port/your_uri from a client and you should see "uri" uri:"your_uri" on the dev tools
+//You should get an update counter each time you perform the request
 ```
+
+It is also possible to pass a serverTimeout (default 10s) for request to be served to the server constructor, otherwise 500 error is returned.
 
 #### Unset listener
 ```javascript
- httpd.unsetRequestListener(onSuccess,onError); //equiv of passing null to the above 
+ httpd.unsetRequestListener(onSuccess,onError);
 ```
 
 # Credits #
