@@ -27,6 +27,9 @@ import java.io.FileOutputStream;
 
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * A simple, tiny, nicely embeddable HTTP 1.0 (partially 1.1) server in Java
  *
@@ -453,6 +456,26 @@ public class NanoHTTPD
 						String boundary = st.nextToken();
 
 						decodeMultipartData(boundary, fbuf, in, parms, files);
+					}
+					else if (contentType.equalsIgnoreCase("application/json")){
+						String postLine = "";
+						char pbuf[] = new char[512];
+						int read = in.read(pbuf);
+						while ( read >= 0 && !postLine.endsWith("\r\n") )
+						{
+							postLine += String.valueOf(pbuf, 0, read);
+							read = in.read(pbuf);
+						}
+						postLine = postLine.trim();
+						Log.i(LOGTAG,"RECEIVED JSON CONTENT: "+ postLine);
+						try{
+							JSONObject body = new JSONObject(postLine);
+							parms.put("json",body);
+						}
+						catch(JSONException ex){
+							Log.e(LOGTAG, "JSON EXCEPTION: "+ ex.toString());
+							sendError(HTTP_BADREQUEST, "Bad Request - Malformed JSON: " + ex.toString());
+						}
 					}
 					else
 					{
@@ -1131,6 +1154,7 @@ public class NanoHTTPD
 						"mov		video/quicktime " +
 						"swf		application/x-shockwave-flash " +
 						"js			application/javascript "+
+						"json		application/json "+
 						"pdf		application/pdf "+
 						"doc		application/msword "+
 						"ogg		application/x-ogg "+

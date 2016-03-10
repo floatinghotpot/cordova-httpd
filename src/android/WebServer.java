@@ -143,7 +143,7 @@ public class WebServer extends NanoHTTPD
     public Void onServeEvent(JSONObject parameters) {
         CountDownLatch signal = new CountDownLatch(1); //1 to wait
         responseHandler.setSignal(signal);
-        Log.i(LOGTAG, "---------------------- Signal set");
+        Log.i(LOGTAG, "---------------------- Signal set: PARAMS = "+ parameters.toString());
         try{
             _plugin.sendRequestBackToJavascript(parameters);
 
@@ -164,22 +164,31 @@ public class WebServer extends NanoHTTPD
 	@Override
 	public Response serve( String uri, String method, Properties header, Properties parms, Properties files )
 	{
-		Log.i(LOGTAG, method + " '" + uri + "' ");
+		Log.i(LOGTAG, "SERVE CALLED WITH: "+method + " '" + uri + "' ");
 
         //Dynamic behavior
         if(this._plugin.getOnServeCallback() != null){
             try{
                 JSONObject cbParams = new JSONObject();
                 cbParams.put("uri",uri);
-                cbParams.put("method",method);
-                Enumeration e = parms.propertyNames();
-                JSONObject properties = new JSONObject();
-                while (e.hasMoreElements()){
-                    String value = (String)e.nextElement();
-                    properties.put(value,parms.getProperty(value));
+                cbParams.put("method", method);
+
+                Enumeration e = null;
+                //Parse body/properties of GET
+                JSONObject properties = null;
+                if(parms.containsKey("json")){
+                    properties = (JSONObject)parms.get("json");
+                }
+                else{
+                    e = parms.propertyNames();
+                    properties = new JSONObject();
+                    while (e.hasMoreElements()){
+                        String value = (String)e.nextElement();
+                        properties.put(value, parms.get(value));
+                    }
                 }
                 cbParams.put("properties",properties);
-
+                //Parse header
                 e = header.propertyNames();
                 JSONObject headers = new JSONObject();
                 while (e.hasMoreElements()){
