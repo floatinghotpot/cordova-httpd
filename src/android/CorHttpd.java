@@ -17,6 +17,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -145,6 +148,15 @@ public class CorHttpd extends CordovaPlugin {
         
         return true;
     }
+
+    private String __getWifiIpAddress(){
+        WifiManager wifiMgr = (WifiManager) cordova.getActivity().getSystemService(cordova.getActivity().WIFI_SERVICE);
+        WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
+        int ip = wifiInfo.getIpAddress();
+        @SuppressWarnings("deprecation")
+        String ipAddress = Formatter.formatIpAddress(ip);
+        return ipAddress;
+    }
     
     private String __getLocalIpAddress() {
     	try {
@@ -153,9 +165,8 @@ public class CorHttpd extends CordovaPlugin {
                 for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
                     InetAddress inetAddress = enumIpAddr.nextElement();
                     if (! inetAddress.isLoopbackAddress()) {
-                    	String ip = inetAddress.getHostAddress();
-                    	//if(InetAddressUtils.isIPv4Address(ip)) {
                         if(inetAddress instanceof Inet4Address){
+                            String ip = inetAddress.getHostAddress();
                     		Log.w(LOGTAG, "local IP: "+ ip);
                     		return ip;
                     	}
@@ -205,7 +216,7 @@ public class CorHttpd extends CordovaPlugin {
                     if (localhost_only) {
                         url = "http://127.0.0.1:" + port;
                     } else {
-                        url = "http://" + __getLocalIpAddress() + ":" + port;
+                        url = "http://" + __getWifiIpAddress() + ":" + port;
                     }
 	                delayCallback.success( url );
 				}
