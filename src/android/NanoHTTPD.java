@@ -1016,7 +1016,7 @@ public class NanoHTTPD {
 
     static {
         StringTokenizer st = new StringTokenizer(
-                "css		text/css " +
+                        "css		text/css " +
                         "htm		text/html " +
                         "html		text/html " +
                         "xml		text/xml " +
@@ -1039,6 +1039,7 @@ public class NanoHTTPD {
                         "doc		application/msword " +
                         "ogg		application/x-ogg " +
                         "zip		application/octet-stream " +
+                        "map		application/octet-stream " +
                         "exe		application/octet-stream " +
                         "eot		application/vnd.ms-fontobject" +
                         "woff		application/font-woff" +
@@ -1093,4 +1094,3 @@ public class NanoHTTPD {
                     "(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n" +
                     "OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.";
 }
-
