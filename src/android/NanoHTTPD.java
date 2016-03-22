@@ -1160,7 +1160,13 @@ public class NanoHTTPD
 						"ogg		application/x-ogg "+
 						"zip		application/octet-stream "+
 						"exe		application/octet-stream "+
-				"class		application/octet-stream " );
+						"eot		application/vnd.ms-fontobject"+
+						"woff		application/font-woff"+
+						"woff2		application/font-woff2"+
+						"ttf		application/x-font-truetype"+
+						"svg		image/svg+xml"+
+						"otf		application/x-font-opentype"+
+						"class		application/octet-stream " );
 		while ( st.hasMoreTokens())
 			theMimeTypes.put( st.nextToken(), st.nextToken());
 	}
@@ -1207,4 +1213,3 @@ public class NanoHTTPD
 					"(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\n"+
 					"OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.";
 }
-
