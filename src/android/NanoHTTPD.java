@@ -874,7 +874,7 @@ public class NanoHTTPD {
             }
 
             if (res == null) {
-                // First try index.html and index.htm 
+                // First try index.html and index.htm
                 if (new AndroidFile(f, "index.html").exists())
                     f = new AndroidFile(homeDir, uri + "/index.html");
                 else if (new AndroidFile(f, "index.htm").exists())
@@ -1043,7 +1043,7 @@ public class NanoHTTPD {
                         "eot		application/vnd.ms-fontobject" +
                         "woff		application/font-woff" +
                         "woff2		application/font-woff2" +
-                        "ttf		application/x-font-truetype" +
+                        "ttf		application/octet-stream" +
                         "svg		image/svg+xml" +
                         "otf		application/x-font-opentype" +
                         "class		application/octet-stream ");
