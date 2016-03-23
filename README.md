@@ -18,10 +18,14 @@ Why http access is good?
 
 ## How to use CorHttpd? ##
 
-Add the plugin to your cordova project:
-
+Add the plugin to your cordova project, from npm repository (faster):
+```bash
+    cordova plugin add cordova-plugin-httpd
+```
+Or, add plugin directly from GitHub repo:
+```bash
     cordova plugin add https://github.com/floatinghotpot/cordova-httpd.git
-
+```
 Quick start, copy the demo files, and just build to play.
 
     cp -r plugins/com.rjfun.cordova.httpd/test/* www/
@@ -29,7 +33,6 @@ Quick start, copy the demo files, and just build to play.
 ## Javascript APIs ##
 
 ```javascript
-
 startServer( options, success_callback, error_callback );
 
 stopServer( success_callback, error_callback );
