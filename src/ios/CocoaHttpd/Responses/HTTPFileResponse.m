@@ -44,6 +44,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 		}
 		
 		fileLength = (UInt64)[[fileAttributes objectForKey:NSFileSize] unsignedLongLongValue];
+		fileLastModified = (NSDate *)[fileAttributes objectForKey:NSFileModificationDate];
 		fileOffset = 0;
 		
 		aborted = NO;
@@ -104,6 +105,13 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	HTTPLogTrace();
 	
 	return fileLength;
+}
+
+- (NSDate *)lastModified
+{
+	HTTPLogTrace();
+
+	return fileLastModified;
 }
 
 - (UInt64)offset

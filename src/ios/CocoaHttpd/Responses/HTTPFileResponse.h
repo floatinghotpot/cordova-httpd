@@ -11,6 +11,7 @@
 	NSString *filePath;
 	UInt64 fileLength;
 	UInt64 fileOffset;
+	NSDate *fileLastModified;
 	
 	BOOL aborted;
 	

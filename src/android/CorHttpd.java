@@ -1,7 +1,7 @@
 package com.rjfun.cordova.httpd;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
@@ -12,17 +12,12 @@ import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.PluginResult;
 import org.apache.cordova.PluginResult.Status;
-import org.apache.http.conn.util.InetAddressUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.net.wifi.WifiManager;
-import android.os.Environment;
 import android.util.Log;
 import android.content.Context;
-import android.content.Intent;
-import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 
 /**
@@ -83,8 +78,8 @@ public class CorHttpd extends CordovaPlugin {
                 for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
                     InetAddress inetAddress = enumIpAddr.nextElement();
                     if (! inetAddress.isLoopbackAddress()) {
-                    	String ip = inetAddress.getHostAddress();
-                    	if(InetAddressUtils.isIPv4Address(ip)) {
+                        if (inetAddress instanceof Inet4Address) {
+                            String ip = inetAddress.getHostAddress();
                     		Log.w(LOGTAG, "local IP: "+ ip);
                     		return ip;
                     	}
@@ -125,10 +120,14 @@ public class CorHttpd extends CordovaPlugin {
 			@Override
             public void run() {
 				String errmsg = __startServer();
-				if(errmsg != "") {
+				if (errmsg.length() > 0) {
 					delayCallback.error( errmsg );
 				} else {
-			        url = "http://" + __getLocalIpAddress() + ":" + port;
+                    if (localhost_only) {
+                        url = "http://127.0.0.1:" + port;
+                    } else {
+                        url = "http://" + __getLocalIpAddress() + ":" + port;
+                    }
 	                delayCallback.success( url );
 				}
             }
@@ -147,7 +146,7 @@ public class CorHttpd extends CordovaPlugin {
     		f.setAssetManager( am );
     		
     		if(localhost_only) {
-    			InetSocketAddress localAddr = InetSocketAddress.createUnresolved("127.0.0.1", port);
+    			InetSocketAddress localAddr = new InetSocketAddress(InetAddress.getByAddress(new byte[]{127,0,0,1}), port);
     			server = new WebServer(localAddr, f);
     		} else {
     			server = new WebServer(port, f);
