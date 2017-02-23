@@ -503,7 +503,7 @@ public class NanoHTTPD
 			try {
 				// Read the request line
 				String inLine = in.readLine();
-				if (inLine == null) return;
+				if (inLine == null) sendError( HTTP_BADREQUEST, "BAD REQUEST: Syntax error. Usage: GET /example/file.html" );
 				StringTokenizer st = new StringTokenizer( inLine );
 				if ( !st.hasMoreTokens())
 					sendError( HTTP_BADREQUEST, "BAD REQUEST: Syntax error. Usage: GET /example/file.html" );
