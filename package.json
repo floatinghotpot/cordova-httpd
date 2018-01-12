@@ -1,0 +1,41 @@
+
+{
+  "name": "cordova-httpd",
+  "description": "Embeded httpd for cordova.",
+  "version": "0.9.2",
+  "homepage": "https://github.com/floatinghotpot/cordova-httpd#readme",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/floatinghotpot/cordova-httpd.git"
+  },
+  "bugs": {
+    "url": "https://github.com/floatinghotpot/cordova-httpd/issues"
+  },
+  "cordova": {
+    "id": "com.rjfun.cordova.httpd",
+    "platforms": [
+      "ios",
+      "android",
+      "osx"
+    ]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "ecosystem:phonegap",
+    "cordova-ios",
+    "cordova-android",
+    "cordova-osx"
+  ],
+  "engines": [
+    {
+      "name": "cordova",
+      "version": ">=3.0.0"
+    }
+  ],
+  "author": "Liming Xie",
+  "license": "MIT",
+  "scripts": {
+  },
+  "devDependencies": {
+  }
+}
