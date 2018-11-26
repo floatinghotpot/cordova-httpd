@@ -242,4 +242,13 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 	
 }
 
+
+- (NSDictionary *)httpHeaders {
+  //HTTPLogTrace();
+  if ([[filePath pathExtension] isEqualToString:@"svg"]) {
+    return [NSDictionary dictionaryWithObject:@"image/svg+xml" forKey:@"Content-Type"];
+  }
+  return [NSDictionary new];
+}
+
 @end
