@@ -40,6 +40,8 @@ xmlns:android="http://schemas.android.com/apk/res/android">
 <source-file src="src/android/NanoHTTPD.java" target-dir="src/com/rjfun/cordova/httpd" />
 <source-file src="src/android/WebServer.java" target-dir="src/com/rjfun/cordova/httpd" />
 
+<resource-file src="src/android/res/mimetypes.txt" target="res/raw/mimetypes.txt" />
+
 </platform>
 
 <platform name="ios">
