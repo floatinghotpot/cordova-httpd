@@ -1093,6 +1093,10 @@ public class NanoHTTPD
 		}
 
 		res.addHeader( "Accept-Ranges", "bytes"); // Announce that the file server accepts partial content requestes
+
+		// Add CORS header
+		res.addHeader( "Access-Control-Allow-Origin", "*");
+
 		return res;
 	}
 
