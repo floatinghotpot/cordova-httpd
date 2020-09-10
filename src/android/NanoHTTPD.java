@@ -1093,6 +1093,10 @@ public class NanoHTTPD
 		}
 
 		res.addHeader( "Accept-Ranges", "bytes"); // Announce that the file server accepts partial content requestes
+
+		// Add CORS header
+		res.addHeader( "Access-Control-Allow-Origin", "*");
+
 		return res;
 	}
 
@@ -1104,30 +1108,35 @@ public class NanoHTTPD
 	static
 	{
 		StringTokenizer st = new StringTokenizer(
-				"css		text/css "+
-						"htm		text/html "+
-						"html		text/html "+
-						"xml		text/xml "+
-						"txt		text/plain "+
-						"asc		text/plain "+
-						"gif		image/gif "+
-						"jpg		image/jpeg "+
-						"jpeg		image/jpeg "+
-						"png		image/png "+
-						"mp3		audio/mpeg "+
-						"m3u		audio/mpeg-url " +
-						"mp4		video/mp4 " +
-						"ogv		video/ogg " +
-						"flv		video/x-flv " +
-						"mov		video/quicktime " +
-						"swf		application/x-shockwave-flash " +
-						"js			application/javascript "+
-						"pdf		application/pdf "+
-						"doc		application/msword "+
-						"ogg		application/x-ogg "+
-						"zip		application/octet-stream "+
-						"exe		application/octet-stream "+
-				"class		application/octet-stream " );
+			"css		text/css "+
+			"htm		text/html "+
+			"html		text/html "+
+			"xml		text/xml "+
+			"java		java=text/x-java-source "+
+			"md			text/plain "+
+			"txt		text/plain "+
+			"asc		text/plain "+
+			"gif		image/gif "+
+			"jpg		image/jpeg "+
+			"jpeg		image/jpeg "+
+			"png		image/png "+
+			"svg		image/svg+xml "+
+			"mp3		audio/mpeg "+
+			"m3u		audio/mpeg-url " +
+			"mp4		video/mp4 " +
+			"ogv		video/ogg " +
+			"flv		video/x-flv " +
+			"mov		video/quicktime " +
+			"swf		application/x-shockwave-flash " +
+			"js			application/javascript "+
+			"pdf		application/pdf "+
+			"doc		application/msword "+
+			"ogg		application/x-ogg "+
+			"zip		application/octet-stream "+
+			"exe		application/octet-stream "+
+			"class		application/octet-stream "+
+			"m3u8		application/vnd.apple.mpegurl "+ 
+			"ts			video/mp2t " );
 		while ( st.hasMoreTokens())
 			theMimeTypes.put( st.nextToken(), st.nextToken());
 	}

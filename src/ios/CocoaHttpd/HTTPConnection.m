@@ -1200,6 +1200,9 @@ static NSMutableArray *recentNonces;
 		}
 	}
 
+	// Add CORS header
+	[response setHeaderField:@"Access-Control-Allow-Origin" value:@"*"];
+
 	// Add optional lastModified header
 	if ([httpResponse respondsToSelector:@selector(lastModified)])
 	{
