@@ -29,6 +29,10 @@ corhttpd_exports.getURL = function(success, error) {
 	  exec(success, error, "CorHttpd", "getURL", []);
 };
 
+// Compatibility for @ionic-native/httpd plugin. Keep this until the following issue is resolved:
+// https://github.com/danielsogl/awesome-cordova-plugins/issues/3805
+corhttpd_exports.getUrl =  corhttpd_exports.getURL
+
 corhttpd_exports.getLocalPath = function(success, error) {
 	  exec(success, error, "CorHttpd", "getLocalPath", []);
 };
