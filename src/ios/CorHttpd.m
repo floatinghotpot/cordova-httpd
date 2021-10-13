@@ -12,13 +12,13 @@
 
 @interface CorHttpd : CDVPlugin {
     // Member variables go here.
-
 }
 
 @property(nonatomic, retain) HTTPServer *httpServer;
 @property(nonatomic, retain) NSString *localPath;
 @property(nonatomic, retain) NSString *url;
 
+@property (nonatomic, retain) NSString* www_dir_name;
 @property (nonatomic, retain) NSString* www_root;
 @property (assign) int port;
 @property (assign) BOOL localhost_only;
@@ -40,6 +40,7 @@
 #define IP_ADDR_IPv4    @"ipv4"
 #define IP_ADDR_IPv6    @"ipv6"
 
+#define OPT_WWW_DIR_NAME    @"www_dir_name"
 #define OPT_WWW_ROOT        @"www_root"
 #define OPT_PORT            @"port"
 #define OPT_LOCALHOST_ONLY  @"localhost_only"
@@ -111,6 +112,7 @@
     self.localPath = @"";
     self.url = @"";
 
+    self.www_dir_name = @"www";
     self.www_root = @"";
     self.port = 8888;
     self.localhost_only = false;
@@ -122,7 +124,10 @@
 
     NSDictionary* options = [command.arguments objectAtIndex:0];
 
-    NSString* str = [options valueForKey:OPT_WWW_ROOT];
+    NSString* str = [options valueForKey:OPT_WWW_DIR_NAME];
+    if(str) self.www_dir_name = str;
+
+    str = [options valueForKey:OPT_WWW_ROOT];
     if(str) self.www_root = str;
 
     str = [options valueForKey:OPT_PORT];
@@ -156,11 +161,12 @@
     if(self.localhost_only) [self.httpServer setInterface:IP_LOCALHOST];
 
     // Serve files from our embedded Web folder
+    const char * root = [self.www_dir_name UTF8String];
     const char * docroot = [self.www_root UTF8String];
-    if(*docroot == '/') {
+    if(*docroot == '/' || *root == '/') {
         self.localPath = self.www_root;
     } else {
-        NSString* basePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"www"];
+        NSString* basePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:self.www_dir_name];
         self.localPath = [NSString stringWithFormat:@"%@/%@", basePath, self.www_root];
     }
     NSLog(@"Setting document root: %@", self.localPath);
