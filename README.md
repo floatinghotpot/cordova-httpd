@@ -1,4 +1,4 @@
-## CorHttpd: embeded httpd for cordova ##
+## CorHttpd: embeded httpd for cordova & capacitor ##
 
 Supported platform:
 * iOS
@@ -9,6 +9,7 @@ You can browse (locally or remotely) to access files in android/ios phone/pad:
 * browse the files in mobile device with a browser in PC.
 * copy files from mobile device to PC quickly, just with Wifi.
 * use cordova webview to access the assets/www/ content with http protocol.
+  * if using capacitor, set `www_dir_name` to `public`. 
 
 Why http access is good?
 
@@ -18,6 +19,8 @@ Why http access is good?
 
 ## How to use CorHttpd? ##
 
+**Cordova**
+
 Add the plugin to your cordova project:
 
     cordova plugin add https://github.com/floatinghotpot/cordova-httpd.git
@@ -25,6 +28,10 @@ Add the plugin to your cordova project:
 Quick start, copy the demo files, and just build to play.
 
     cp -r plugins/com.rjfun.cordova.httpd/test/* www/
+
+**Capacitor**
+
+Follow these [instructions](https://ionicframework.com/docs/native/httpd/).
     
 ## Javascript APIs ##
 
@@ -75,13 +82,15 @@ Example code: (read the comments)
     	    	if(url.length > 0) {
     	    		document.getElementById('url').innerHTML = "server is up: <a href='" + url + "' target='_blank'>" + url + "</a>";
 	    	    } else {
-	    	        /* wwwroot is the root dir of web server, it can be absolute or relative path
-	    	        * if a relative path is given, it will be relative to cordova assets/www/ in APK.
-	    	        * "", by default, it will point to cordova assets/www/, it's good to use 'htdocs' for 'www/htdocs'
-	    	        * if a absolute path is given, it will access file system.
-	    	        * "/", set the root dir as the www root, it maybe a security issue, but very powerful to browse all dir
+	    	       /* For capacitor users, set www_dir_name to "public". For Cordova users the default is "www". 
+                    * wwwroot is the root dir of web server and child dir of www_dir_name, it can be an absolute or relative path
+	    	        * if a relative path is given, it will be relative to assets/www/ for cordova users or public for capacitor users, depending on the value of www_dir_name.
+	    	        * if it is "", by default, it will point to cordova assets/www/ or capacitor public, depending on the value of www_dir_name. For cordova, it's good to use 'htdocs' for 'www/htdocs'
+	    	        * if an absolute path is given, it will access the file system, even if www_dir_name is set.
+	    	        * "/", set the root dir as the www root even if www_dir_name is set, it maybe a security issue, but very powerful to browse all dir
 	    	        */
     	    	    httpd.startServer({
+                        'www_dir_name': "www",
     	    	    	'www_root' : wwwroot,
     	    	    	'port' : 8080,
     	    	    	'localhost_only' : false
